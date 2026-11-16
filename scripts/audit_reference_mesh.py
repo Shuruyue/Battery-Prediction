@@ -13,6 +13,7 @@ from multiprocessing import Pool
 import _path  # noqa: F401
 
 from ups_battery_prediction import reference as ref
+from ups_battery_prediction import results as rs
 
 POINTS = [(0.0, 1.5, 0.7), (0.0, 1.5, 1.0), (0.0, 1.0, 1.0), (10.0, 1.5, 0.7), (45.0, 1.5, 0.7), (25.0, 0.2, 1.0)]
 MESHES = [dict(x_n=x, x_s=x // 2, x_p=x, r_n=r, r_p=r) for x in (20, 40) for r in (40, 80, 160, 320)]
@@ -37,7 +38,7 @@ def main():
     os.environ.setdefault("OMP_NUM_THREADS", "1")
     with Pool(args.workers) as pool:
         rows = pool.map(job, [(m, pt) for m in MESHES for pt in POINTS], chunksize=1)
-    ref.save_json(dict(points=POINTS, meshes=MESHES, runs=rows), _path.result("reference_mesh_audit.json"), indent=1)
+    rs.save_json(dict(points=POINTS, meshes=MESHES, runs=rows), _path.result("reference_mesh_audit.json"), indent=1)
 
 
 if __name__ == "__main__":

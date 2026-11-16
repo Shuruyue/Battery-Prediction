@@ -2,7 +2,9 @@
 every quoted string is still what the results give."""
 import os
 
-from . import reference as ref
+from . import ageing, params
+from . import design as ds
+from . import results as rs
 
 N_CELLS = 56                          # example UPS: 56 cells in series at 18 W each, about 1 kW
 E_CELL_WH = 5.0 * 3.63                # nominal energy per cell (5 A h x 3.63 V)
@@ -26,16 +28,16 @@ def _pct(v):
 
 def compute(results_dir):
     def load(name):
-        return ref.load_json(os.path.join(results_dir, name))
+        return rs.load_json(os.path.join(results_dir, name))
     ml = load("ml_results.json")
     th = {(r["T_C"], r["h"]): r for r in load("thermal_effect.json")["rows"]}
     pert = load("perturbation.json")["cases"]
     run = load("verify_runaway.json")
     acc = ml["accuracy"]
-    pts = ref.reference_points(os.path.join(results_dir, "reference.json"))
+    pts = rs.reference_points(os.path.join(results_dir, "reference.json"))
     hot = max(pts, key=lambda d: d["T_peak_C"])
     out = {}
-    out["e_over_p_min"] = f"{E_CELL_WH / ref.P_RATED * 60:.1f} min"
+    out["e_over_p_min"] = f"{E_CELL_WH / ds.P_RATED * 60:.1f} min"
     out["energy_kwh"] = f"{N_CELLS * E_CELL_WH / 1000:.2f} kWh"
     for T_C, name in ((25.0, "warm"), (0.0, "cold")):
         out[f"ref_{name}_min"] = f"{th[(T_C, 10.0)]['dfn_min']:.1f} min"
@@ -71,7 +73,14 @@ def compute(results_dir):
     out["hot_peak_C"] = f"{hot['T_peak_C']:.0f} °C"
     for c in ("LCO", "NMC111", "LFP"):
         out[f"crit_{c}"] = f"{run['oven'][f'{c}_critical_C']:.0f} °C"
+    lopez = run["oven"].get("LCO_Lopez2015_contents_critical_C")
+    if lopez is not None:
+        out["crit_LCO_lopez"] = f"{lopez:.0f} °C"
     out["n_wide"] = str(ml["n_wide"])
+    out["pybamm_version"] = "PyBaMM " + load("verify_pybamm.json")["pybamm_version"]
+    old = ageing.cell_state(0.7)
+    out["sei_thickness_07"] = f"{old.r_film / params.SEI_RESISTIVITY * 1e6:.2f} µm"
+    out["film_resistance_07"] = f"{old.r_contact * 1e3:.0f} mΩ"
     return out
 
 

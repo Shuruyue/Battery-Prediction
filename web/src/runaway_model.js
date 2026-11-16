@@ -190,17 +190,6 @@
     return sol;
   }
 
-  /* Heat generation and loss against cell temperature for the fresh cell (Semenov diagram). */
-  function semenov(c, Tamb, h, Ts) {
-    var gen = [], loss = [];
-    for (var i = 0; i < Ts.length; i++) {
-      var T = Ts[i];
-      gen.push(heatRate(c, T, c.c_sei0, c.c_neg0, c.t_sei0, c.alpha0, c.c_e0)[4] * CELL.volume);
-      loss.push((h == null ? CELL.h : h) * CELL.area * (T - Tamb) + CELL.emissivity * SB * CELL.area * (Math.pow(T, 4) - Math.pow(Tamb, 4)));
-    }
-    return { gen: gen, loss: loss };
-  }
-
   /* Heat released by the reactions and heat passed to the surroundings (W) for one cell state. */
   function powers(c, y, Tamb, h) {
     var T = Math.max(y[0], 1);
@@ -211,6 +200,6 @@
 
   var api = { powers: powers, CHEM: CHEM, CELL: CELL, NS: NS, makeRhs: makeRhs, initial: initial, backwardEuler: backwardEuler,
     explicitEuler: explicitEuler, ovenTest: ovenTest, criticalOven: criticalOven, propagation: propagation,
-    semenov: semenov, crossing: crossing };
+    crossing: crossing };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.TR = api;
 })(typeof window !== "undefined" ? window : this);

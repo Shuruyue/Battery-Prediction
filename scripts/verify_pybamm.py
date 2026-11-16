@@ -17,7 +17,7 @@ import pybamm
 
 from ups_battery_prediction import discharge as dc
 from ups_battery_prediction import params as p
-from ups_battery_prediction import reference as ref
+from ups_battery_prediction import results as rs
 
 pybamm.set_logging_level("ERROR")
 CODE_CASES = [(25.0, 2.5), (25.0, 5.0), (25.0, 10.0), (0.0, 2.5), (0.0, 5.0), (-10.0, 2.5)]   # (T [C], current [A])
@@ -99,7 +99,7 @@ def form_check():
 
 def main():
     out = dict(pybamm_version=pybamm.__version__, pybamm_mesh=PB_MESH, code_check=code_check(), form_check=form_check())
-    ref.save_json(out, _path.result("verify_pybamm.json"), indent=1)
+    rs.save_json(out, _path.result("verify_pybamm.json"), indent=1)
 
 
 if __name__ == "__main__":

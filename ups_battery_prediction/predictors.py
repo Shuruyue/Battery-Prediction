@@ -15,7 +15,7 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
-from .reference import NORMAL
+from .design import NORMAL
 
 
 def distance_outside(X):
@@ -95,10 +95,15 @@ class Hybrid:
 
 def conformal_quantile(y_cal, yhat_cal, alpha=0.1):
     """Split-conformal half-width factor q for relative residuals: the interval is yhat (1 +- q), q being the
-    ceil((n + 1)(1 - alpha))-th smallest of |y - yhat| / yhat on calibration data."""
-    r = np.abs(np.asarray(y_cal) - np.asarray(yhat_cal)) / np.asarray(yhat_cal)
+    k-th smallest of |y - yhat| / yhat on the n calibration points, k = ceil((n + 1)(1 - alpha)). For exchangeable
+    data a new point is covered with probability k / (n + 1) >= 1 - alpha (46/51 = 0.902 for n = 50, alpha = 0.1).
+    If k > n no finite interval has that guarantee and q is infinite."""
+    r = np.sort(np.abs(np.asarray(y_cal, float) - np.asarray(yhat_cal, float)) / np.asarray(yhat_cal, float))
     n = len(r)
-    return float(np.quantile(r, min(1.0, np.ceil((n + 1) * (1 - alpha)) / n), method="higher"))
+    # the tolerance keeps a product that is an integer in exact arithmetic (10 x 0.9 = 9.000000000000002 in binary)
+    # from being rounded up to the next one
+    k = int(np.ceil((n + 1) * (1 - alpha) - 1e-9))
+    return float(r[k - 1]) if k <= n else float("inf")
 
 
 def mape(y, yhat):

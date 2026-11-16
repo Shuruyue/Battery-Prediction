@@ -21,7 +21,7 @@ from pathlib import Path
 import _path  # noqa: F401
 import numpy as np
 
-from ups_battery_prediction import reference as ref
+from ups_battery_prediction import results as rs
 from ups_battery_prediction import thermal_runaway as tr
 
 PAGE = Path(_path.ROOT) / "web" / "ups-battery.html"
@@ -79,7 +79,7 @@ def check_physics(n_cases):
     for c, n_js in zip(inp["rows"], js["rows"], strict=True):
         bad += n_js != tr.propagation(CHEMS[c["chem"]], n=6, G=c["G"], t_end=2400.0)[2]["n_runaway"]
     report["rows of six cells"] = (len(inp["rows"]), bad)
-    crit = ref.load_json(_path.result("verify_runaway.json"))["oven"]
+    crit = rs.load_json(_path.result("verify_runaway.json"))["oven"]
     bad = sum(abs(js["crit"][c] - 273.15 - crit[f"{c}_critical_C"]) > 0.3 for c in CHEMS)
     report["critical oven temperatures"] = (len(CHEMS), bad)
     return report
@@ -95,10 +95,10 @@ def check_data():
     import importlib.util
     data, text = page_data()
     report = {}
-    g = ref.load_json(_path.result("model_grid.json"))
+    g = rs.load_json(_path.result("model_grid.json"))
     sim = np.round(np.array(g["runtime_min"]).ravel(), 3)
     report["simulation grid"] = (sim.size, int(np.sum(np.abs(np.array(data["models"]["Simulation"]) - sim) > 1e-9)))
-    pts = ref.reference_points(_path.result("reference.json"))
+    pts = rs.reference_points(_path.result("reference.json"))
     ok = len(pts) == len(data["reference"]) and all(abs(a["t"] - round(b["runtime_min"],
                                                                        3)) < 1e-9 and a["tag"] == b["tag"]
                                                      for a, b in zip(data["reference"], pts, strict=True))

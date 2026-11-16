@@ -27,6 +27,11 @@ class CellState:
         return self.r_film / (p.A_N * p.L_N * p.AREA)
 
 
+# names of params.py that the cell state depends on (a parameter variant must not change them, see discharge.py)
+PARAMETERS_USED = frozenset({"C_N_MAX", "C_P_MAX", "C_N_FULL", "C_P_FULL", "EPS_ACT_N", "EPS_ACT_P", "L_N", "L_P",
+                             "AREA", "A_N", "F", "V_MIN", "ocp_n", "ocp_p", "ocp_n_ref", "ocp_p_ref", "dUdT_n",
+                             "dUdT_p", "SEI_MOLAR_VOLUME", "SEI_RESISTIVITY", "SEI_LI_PER_MOL", "SEI_THICKNESS_0"})
+
 Q_N_SITES = p.C_N_MAX * p.EPS_ACT_N * p.L_N * p.AREA      # mol of sites, negative
 Q_P_SITES = p.C_P_MAX * p.EPS_ACT_P * p.L_P * p.AREA      # mol of sites, positive
 X_NEW, Y_NEW = p.C_N_FULL / p.C_N_MAX, p.C_P_FULL / p.C_P_MAX

@@ -11,8 +11,9 @@ from dataclasses import dataclass
 import numpy as np
 from sklearn.metrics import r2_score
 
+from . import design as ds
 from . import predictors as pr
-from . import reference as rf
+from . import results as rs
 
 NOISE = 0.02
 N_TEST, N_TRAIN, N_CAL = 56, 150, 50
@@ -46,13 +47,13 @@ class Data:
 
 def load_data(reference_path, model_points_path, column):
     """Reference points joined with the own model's runtime from `column` of the model-points file."""
-    ref = rf.reference_points(reference_path)
-    own = {rf.key(d): d for d in rf.load_json(model_points_path)}
-    missing = [rf.key(d) for d in ref if rf.key(d) not in own]
+    ref = rs.reference_points(reference_path)
+    own = {ds.key(d): d for d in rs.load_json(model_points_path)}
+    missing = [ds.key(d) for d in ref if ds.key(d) not in own]
     if missing:
         raise KeyError(f"{len(missing)} reference points have no model result, e.g. {missing[0]}")
-    X, y, tag = rf.arrays(ref)
-    sim = np.array([own[rf.key(d)][column] for d in ref])
+    X, y, tag = rs.arrays(ref)
+    sim = np.array([own[ds.key(d)][column] for d in ref])
     return Data(X, y, tag, sim)
 
 

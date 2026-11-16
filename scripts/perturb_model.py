@@ -14,10 +14,11 @@ from multiprocessing import Pool
 import _path  # noqa: F401
 import numpy as np
 
+from ups_battery_prediction import design as ds
 from ups_battery_prediction import discharge as dc
 from ups_battery_prediction import params as p
 from ups_battery_prediction import predictors as pr
-from ups_battery_prediction import reference as ref
+from ups_battery_prediction import results as rs
 
 CASES = {
     "exact parameters": (dc.Scale(), p.H_COOL),
@@ -34,15 +35,15 @@ CASES = {
 
 
 def points():
-    pts = [d for d in ref.reference_points(_path.result("reference.json")) if d["tag"] in ("normal", "wide")]
-    return ref.arrays(pts)
+    pts = [d for d in rs.reference_points(_path.result("reference.json")) if d["tag"] in ("normal", "wide")]
+    return rs.arrays(pts)
 
 
 def case(name):
     scale, h = CASES[name]
     X, y, tag = points()
     t0 = time.time()
-    r = dc.simulate(X[:, 0] + 273.15, X[:, 2], power=ref.P_RATED * X[:, 1], scale=scale, h=h)
+    r = dc.simulate(X[:, 0] + 273.15, X[:, 2], power=ds.P_RATED * X[:, 1], scale=scale, h=h)
     t = r["runtime_s"] / 60
     res = dict(inside=pr.mape(y[tag == "normal"], t[tag == "normal"]),
                outside=pr.mape(y[tag == "wide"], t[tag == "wide"]), n_nan=int(np.isnan(t).sum()),
@@ -63,7 +64,7 @@ def main():
         out = dict(map(case, CASES))
     out = {name: out[name] for name in CASES}
     X, y, tag = points()
-    ref.save_json(dict(cases=out, n_inside=int((tag == "normal").sum()), n_outside=int((tag == "wide").sum())),
+    rs.save_json(dict(cases=out, n_inside=int((tag == "normal").sum()), n_outside=int((tag == "wide").sum())),
                   _path.result("perturbation.json"), indent=1)
 
 

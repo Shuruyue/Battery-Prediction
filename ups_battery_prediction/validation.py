@@ -5,8 +5,9 @@ import os
 
 import numpy as np
 
+from . import design as ds
 from . import experiment as ex
-from . import reference as ref
+from . import results as rs
 from . import summary
 
 
@@ -22,7 +23,7 @@ def _info(category, check, value, how):
 
 def reference_checks(rd):
     rows = []
-    audit = ref.load_json(os.path.join(rd, "reference_mesh_audit.json"))
+    audit = rs.load_json(os.path.join(rd, "reference_mesh_audit.json"))
     runs = {(r["T_C"], r["load"], r["soh"], r["mesh"]["x_n"],
              r["mesh"]["r_n"]): r for r in audit["runs"] if r.get("ok")}
     for (label, a, b) in (("radial points 160 vs 320 (x 20/10/20)", (20, 160), (20, 320)),
@@ -31,8 +32,8 @@ def reference_checks(rd):
              for pt in map(tuple, audit["points"]) if pt + a in runs and pt + b in runs]
         rows.append(_row("Reference", f"mesh audit: {label}, worst of {len(d)} corner points (%)", max(d), 0, 0.2,
                          max(d) < 0.2, "runtime at the hardest corners of the design on two meshes"))
-    pts = ref.design_points()
-    ok = ref.reference_points(os.path.join(rd, "reference.json"))
+    pts = ds.design_points()
+    ok = rs.reference_points(os.path.join(rd, "reference.json"))
     rows.append(_row("Reference", "design points solved to 2.5 V", len(ok), len(pts), 0, len(ok) == len(pts),
                      "PyBaMM DFN + lumped thermal at every design point; end voltage within 20 mV of the cut-off"))
     return rows
@@ -40,7 +41,7 @@ def reference_checks(rd):
 
 def pybamm_checks(rd):
     rows = []
-    v = ref.load_json(os.path.join(rd, "verify_pybamm.json"))
+    v = rs.load_json(os.path.join(rd, "verify_pybamm.json"))
     cc = v["code_check"]
     for model, thermal in sorted({(r["model"], r["thermal"]) for r in cc}, key=lambda m: (m[0] != "SPM", m[1])):
         rr = [r for r in cc if r["model"] == model and r["thermal"] == thermal]
@@ -63,7 +64,7 @@ def pybamm_checks(rd):
 
 def convergence_checks(rd):
     rows = []
-    c = ref.load_json(os.path.join(rd, "convergence.json"))
+    c = rs.load_json(os.path.join(rd, "convergence.json"))
     own = {r["n_r"]: r["runtime_s"] for r in c["spm"]["own"]}
     pb = {r["n_r"]: r["runtime_s"] for r in c["spm"]["pybamm"]}
     d = abs(own[15] / own[max(own)] - 1) * 100
@@ -88,7 +89,7 @@ def convergence_checks(rd):
 
 def heat_checks(rd):
     rows = []
-    th = ref.load_json(os.path.join(rd, "thermal_effect.json"))["rows"]
+    th = rs.load_json(os.path.join(rd, "thermal_effect.json"))["rows"]
     err = lambda r: abs(r["own_min"] / r["dfn_min"] - 1) * 100  # noqa: E731
     used = [r for r in th if r["h"] == 10.0]
     worst = max(err(r) for r in used)
@@ -111,7 +112,7 @@ def heat_checks(rd):
 
 def runaway_checks(rd):
     rows = []
-    v = ref.load_json(os.path.join(rd, "verify_runaway.json"))
+    v = rs.load_json(os.path.join(rd, "verify_runaway.json"))
     err = max(abs(a["dT_sim"] / a["dT_from_composition"] - 1) for a in v["adiabatic"].values())
     rows.append(_row("Thermal runaway", "adiabatic cell: temperature rise against released heat (relative)", err, 0,
                      1e-6,
@@ -138,12 +139,17 @@ def runaway_checks(rd):
     c = v["oven"]["LCO_critical_C"]
     rows.append(_row("Thermal runaway", "LCO 18650 oven onset (C)", c, "145-150", "", 145.0 < c < 150.0,
                      "oven tests of Hatchard et al. 2001; Lopez et al. 2015 (Fig. 2a): onset between 145 and 150 C"))
+    lopez = v["oven"].get("LCO_Lopez2015_contents_critical_C")
+    if lopez is not None:
+        rows.append(_info("Thermal runaway", "LCO oven onset with the carbon and electrolyte contents of Lopez et al. "
+                          "2015 (C)", lopez, "observation: the match above depends on two contents that could not be "
+                          "checked against Kim et al. 2007"))
     return rows
 
 
 def experiment_checks(rd):
     rows = []
-    ml = ref.load_json(os.path.join(rd, "ml_results.json"))
+    ml = rs.load_json(os.path.join(rd, "ml_results.json"))
     acc = ml["accuracy"]
     covs = {k: a["cover_in"][0] for k, a in acc.items() if "cover_in" in a}
     lo, hi = min(covs.values()), max(covs.values())
@@ -155,9 +161,10 @@ def experiment_checks(rd):
     sl = data.sweep("sweep_load")
     at = {round(float(x[1]), 6): (x, t) for x, t in zip(data.X[sl], data.y[sl], strict=True)}
     err = max(abs(pk.predict(at[L][0][None])[0] / at[L][1] - 1) for L in (0.5, 1.0))
-    rows.append(_row("Experiment", "Peukert law passes through its two rated points (relative)", err, 0, 1e-12,
-                     err < 1e-12,
-                     "closed form"))
+    # computed here, not read from results/, so its last bits depend on the platform's libm: report it rounded,
+    # which keeps VALIDATION.md the same on every platform (CI compares it)
+    rows.append(_row("Experiment", "Peukert law passes through its two rated points (relative)", round(err, 13), 0,
+                     1e-12, err < 1e-12, "closed form; shown rounded to 1e-13"))
     rows.append(_row("Experiment", "points: normal / outside", f"{len(data.normal)} / {len(data.wide)}",
                      "256 / up to 128",
                      "", len(data.normal) == 256 and 0 < len(data.wide) <= 128, "Sobol design"))

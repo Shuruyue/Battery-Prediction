@@ -38,7 +38,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from . import params as p
-from .ageing import V_FULL, cell_state
+from .ageing import PARAMETERS_USED, V_FULL, cell_state
 from .numerics import Electrolyte, Particle, step_pair
 
 _EPS = 1e-6
@@ -54,14 +54,35 @@ class Scale:
     ohmic: float = 1.0
 
 
-def _particles(n_r):
-    if n_r not in _PARTICLES:
-        _PARTICLES[n_r] = (Particle(p.R_N, n_r, p.D_n_ref), Particle(p.R_P, n_r, p.D_p_ref))
-    return _PARTICLES[n_r]
+def _particles(prm, n_r):
+    """The two particle grids (cached: building the Kirchhoff table of D_ref takes a moment)."""
+    key = (n_r, prm.R_N, prm.R_P, prm.D_n_ref, prm.D_p_ref)
+    if key not in _PARTICLES:
+        _PARTICLES[key] = (Particle(prm.R_N, n_r, prm.D_n_ref), Particle(prm.R_P, n_r, prm.D_p_ref))
+    return _PARTICLES[key]
 
 
-def _asinh_eta(i, j0, T):
-    return (2.0 * p.R * T / p.F) * np.arcsinh(i / (2.0 * j0))
+def _asinh_eta(i, j0, T, prm):
+    return (2.0 * prm.R * T / prm.F) * np.arcsinh(i / (2.0 * j0))
+
+
+def _constant_power_current(voltage, I, load, alive, s):
+    """Newton iteration on I V(I) = P for every point of the batch, from the current of the previous step.
+    Returns I, V(I), the surface stoichiometries and whether the power is met. Once the electrolyte of a cell is
+    exhausted its voltage is -inf; such a cell fails the check and its discharge ends."""
+    with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
+        for _ in range(30):
+            V, xs, ys = voltage(I, s)
+            f = I * V - load
+            if np.all(np.abs(f[alive]) < 1e-10 * np.maximum(load[alive], 1.0)):
+                break
+            hI = 1e-6 * np.maximum(I, 1e-3)
+            V2, _, _ = voltage(I + hI, s)
+            df = ((I + hI) * V2 - I * V) / hI
+            stepI = np.where(df > 1e-9, f / np.where(df > 1e-9, df, 1.0), 0.0)
+            I = np.clip(I - stepI, 0.2 * I, 5.0 * I)
+        ok = np.isfinite(V) & (np.abs(I * V - load) < 1e-6 * np.maximum(load, 1.0))
+    return I, V, xs, ys, ok
 
 
 def simulate(T_amb, soh=1.0, power=None, current=None, model="SPMe", thermal="lumped", dt=1.0, n_r=30,
@@ -72,11 +93,15 @@ def simulate(T_amb, soh=1.0, power=None, current=None, model="SPMe", thermal="lu
     T_amb [K] (the cell starts at the ambient temperature), soh and the load broadcast to a common batch.
     Returns a dict with 'runtime_s' (time until V = v_min, or until the power can no longer be delivered),
     'energy_Wh', 'charge_Ah', 'T_end_K', 'T_max_K' and, optionally, the traces. `prm` is the parameter set
-    (the params module, or a variant of it from params.variant)."""
+    (the params module, or a variant of it from params.variant); the state of an aged cell always comes from the
+    params module, so a variant may not change what ageing.cell_state uses."""
     if model not in ("SPM", "SPMe") or thermal not in ("isothermal", "lumped"):
         raise ValueError("model must be 'SPM' or 'SPMe', thermal 'isothermal' or 'lumped'")
     if (power is None) == (current is None):
         raise ValueError("give exactly one of power and current")
+    clash = getattr(prm, "overrides", frozenset()) & PARAMETERS_USED
+    if clash:
+        raise ValueError(f"the cell state of ageing.py does not see these overrides: {sorted(clash)}")
     T_amb = np.atleast_1d(np.asarray(T_amb, float))
     soh = np.atleast_1d(np.asarray(soh, float))
     load = np.atleast_1d(np.asarray(power if power is not None else current, float))
@@ -87,7 +112,7 @@ def simulate(T_amb, soh=1.0, power=None, current=None, model="SPMe", thermal="lu
     x0 = np.array([s.x0 for s in states])
     y0 = np.array([s.y0 for s in states])
     R_c = np.array([s.r_contact for s in states]) * (1.0 if film else 0.0)
-    pn, pp = _particles(n_r)
+    pn, pp = _particles(prm, n_r)
     spme = model == "SPMe"
     el = Electrolyte(prm, *n_x) if spme else None
     lumped = thermal == "lumped"
@@ -96,14 +121,14 @@ def simulate(T_amb, soh=1.0, power=None, current=None, model="SPMe", thermal="lu
     th_n = np.repeat(x0[:, None], n_r, 1)
     th_p = np.repeat(y0[:, None], n_r, 1)
     c_e = np.full((B, el.N), prm.C_E0) if spme else None
-    kn = 1.0 / (p.F * p.A_N * p.L_N * p.AREA * p.C_N_MAX)    # q_n = +I kn
-    kp = 1.0 / (p.F * p.A_P * p.L_P * p.AREA * p.C_P_MAX)    # q_p = -I kp
-    sn = 1.0 / (p.A_N * p.L_N * p.AREA)                      # i_n = I sn
-    sp = 1.0 / (p.A_P * p.L_P * p.AREA)
+    kn = 1.0 / (prm.F * prm.A_N * prm.L_N * prm.AREA * prm.C_N_MAX)    # q_n = +I kn
+    kp = 1.0 / (prm.F * prm.A_P * prm.L_P * prm.AREA * prm.C_P_MAX)    # q_p = -I kp
+    sn = 1.0 / (prm.A_N * prm.L_N * prm.AREA)                          # i_n = I sn
+    sp = 1.0 / (prm.A_P * prm.L_P * prm.AREA)
     const_power = power is not None
     if t_max is None:
         ref = load / 3.6 if const_power else load
-        t_max = float(np.max(3.0 * 3600.0 * p.Q_NOMINAL / np.maximum(ref, 1e-9)))
+        t_max = float(np.max(3.0 * 3600.0 * prm.Q_NOMINAL / np.maximum(ref, 1e-9)))
 
     def voltage(I, s):
         qn, qp = I * kn, -I * kp
@@ -115,14 +140,14 @@ def simulate(T_amb, soh=1.0, power=None, current=None, model="SPMe", thermal="lu
             ce = s["ue"] + i[:, None] * s["we"]
             j0n = scale.exchange * prm.j0_n(xs[:, None], Tk[:, None], np.maximum(ce[:, el.in_n], 0.0))
             j0p = scale.exchange * prm.j0_p(ys[:, None], Tk[:, None], np.maximum(ce[:, el.in_p], 0.0))
-            eta_n = _asinh_eta((I * sn)[:, None], j0n, Tk[:, None]).mean(axis=1)
-            eta_p = _asinh_eta((I * sp)[:, None], j0p, Tk[:, None]).mean(axis=1)
+            eta_n = _asinh_eta((I * sn)[:, None], j0n, Tk[:, None], prm).mean(axis=1)
+            eta_p = _asinh_eta((I * sp)[:, None], j0p, Tk[:, None], prm).mean(axis=1)
             dphi_e = el.potential_difference(ce, Tk, i * scale.ohmic)   # scales the resistive part only
             dphi_s = -i * scale.ohmic * (prm.L_N / (3 * prm.SIGMA_N) + prm.L_P / (3 * prm.sigma_p(Tk)))
             extra = dphi_e + dphi_s
         else:
-            eta_n = _asinh_eta(I * sn, scale.exchange * prm.j0_n(xs, Tk), Tk)
-            eta_p = _asinh_eta(I * sp, scale.exchange * prm.j0_p(ys, Tk), Tk)
+            eta_n = _asinh_eta(I * sn, scale.exchange * prm.j0_n(xs, Tk), Tk, prm)
+            eta_p = _asinh_eta(I * sp, scale.exchange * prm.j0_p(ys, Tk), Tk, prm)
             extra = 0.0
         V = prm.ocp_p(ys, Tk) - prm.ocp_n(xs, Tk) - eta_n - eta_p + extra - I * R_c
         return V, xs, ys
@@ -141,28 +166,18 @@ def simulate(T_amb, soh=1.0, power=None, current=None, model="SPMe", thermal="lu
             tr[k].append(v)
     t = 0.0
     while alive.any() and t < t_max:
-        an = scale.diffusivity * np.exp(p.D_N_THETA * (1.0 / p.T_REF - 1.0 / T))
-        ap = scale.diffusivity * np.exp(p.D_P_THETA * (1.0 / p.T_REF - 1.0 / T))
+        an = scale.diffusivity * np.exp(prm.D_N_THETA * (1.0 / prm.T_REF - 1.0 / T))
+        ap = scale.diffusivity * np.exp(prm.D_P_THETA * (1.0 / prm.T_REF - 1.0 / T))
         un, wn, up, wp = step_pair(pn, th_n, an[:, None], pp, th_p, ap[:, None], dt)
         s = dict(un=un[:, -1], wn=wn[:, -1], up=up[:, -1], wp=wp[:, -1], an=an, ap=ap, T=T)
         if spme:
             ue, we = el.step(c_e, T, dt)
             s.update(ue=ue, we=we)
-        ok = np.ones(B, bool)
         if const_power:
-            for _ in range(30):                                  # Newton on I V(I) = P
-                V, xs, ys = voltage(I, s)
-                f = I * V - load
-                if np.all(np.abs(f[alive]) < 1e-10 * np.maximum(load[alive], 1.0)):
-                    break
-                hI = 1e-6 * np.maximum(I, 1e-3)
-                V2, _, _ = voltage(I + hI, s)
-                df = ((I + hI) * V2 - I * V) / hI
-                stepI = np.where(df > 1e-9, f / np.where(df > 1e-9, df, 1.0), 0.0)
-                I = np.clip(I - stepI, 0.2 * I, 5.0 * I)
-            ok = np.isfinite(V) & (np.abs(I * V - load) < 1e-6 * np.maximum(load, 1.0))
+            I, V, xs, ys, ok = _constant_power_current(voltage, I, load, alive, s)
         else:
-            V, xs, ys = voltage(I, s)
+            with np.errstate(divide="ignore", invalid="ignore"):
+                V, xs, ys = voltage(I, s)
             ok = np.isfinite(V)
         hit = alive & ((V <= v_min) | ~ok)
         if hit.any():

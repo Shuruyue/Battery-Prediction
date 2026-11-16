@@ -5,7 +5,8 @@
 3. Explicit Euler with fixed steps on the same problem (it overflows at the runaway with a 1 s step).
 4. Semenov theory: one zeroth-order reaction, critical ambient temperature from the tangency condition
    against the one found by integrating the ODE.
-5. Oven tests of the three chemistries and their critical oven temperature (bisection).
+5. Oven tests of the three chemistries and their critical oven temperature (bisection), and the LiCoO2 onset with
+   the carbon and electrolyte contents listed by Lopez et al. 2015 instead of those of the parameter set.
 
 Writes results/verify_runaway.json. About ten minutes on one core.
 """
@@ -16,10 +17,11 @@ import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.optimize import brentq
 
-from ups_battery_prediction import reference as ref
+from ups_battery_prediction import results as rs
 from ups_battery_prediction import thermal_runaway as tr
 
 CHEMS = (tr.LCO, tr.NMC, tr.LFP)
+LOPEZ_2015 = dict(W_c=1.39e3, W_e=5.0e2)   # kg/m3, Lopez et al., J. Electrochem. Soc. 162 (2015) A2163, Table 1
 
 
 def adiabatic():
@@ -94,13 +96,19 @@ def ovens():
                                         t_runaway_min=s["t_runaway_s"] / 60)
         ov[f"{ch.name}_critical_C"] = tr.critical_oven_temperature(ch) - 273.15
         print(ch.name, "critical oven temperature", round(ov[f"{ch.name}_critical_C"], 2), "C", flush=True)
+    # The carbon and electrolyte contents attributed to Kim et al. 2007 could not be checked against that paper;
+    # Lopez et al. 2015 (Table 1) list other values for the same cell. Their effect on the onset:
+    lopez = replace(tr.LCO, W_c=LOPEZ_2015["W_c"], W_e=LOPEZ_2015["W_e"])
+    ov["LCO_Lopez2015_contents_critical_C"] = tr.critical_oven_temperature(lopez) - 273.15
+    print("LCO with the contents of Lopez et al. 2015:", round(ov["LCO_Lopez2015_contents_critical_C"], 2), "C",
+          flush=True)
     return ov
 
 
 def main():
     o155, ee = oven155()
     out = dict(adiabatic=adiabatic(), oven155_solver=o155, explicit_euler=ee, semenov=semenov(), oven=ovens())
-    ref.save_json(out, _path.result("verify_runaway.json"), indent=1)
+    rs.save_json(out, _path.result("verify_runaway.json"), indent=1)
 
 
 if __name__ == "__main__":

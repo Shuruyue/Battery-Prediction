@@ -18,7 +18,7 @@ from sklearn.exceptions import ConvergenceWarning
 
 from ups_battery_prediction import experiment as ex
 from ups_battery_prediction import predictors as pr
-from ups_battery_prediction import reference as ref
+from ups_battery_prediction import results as rs
 
 FORMS = ("SPMe_lumped", "SPMe_isothermal", "SPM_isothermal")
 
@@ -55,7 +55,7 @@ def main():
                           bias_wide=float(100 * np.mean(rel[d.wide])))
         print(col, {k: round(v, 2) for k, v in forms[col].items()}, flush=True)
     out["model_forms"] = forms
-    ref.save_json(out, _path.result("ml_results.json"))
+    rs.save_json(out, _path.result("ml_results.json"))
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ Writes results/runaway_scenarios.json. About ten minutes on one core.
 import _path  # noqa: F401
 import numpy as np
 
-from ups_battery_prediction import reference as ref
+from ups_battery_prediction import results as rs
 from ups_battery_prediction import thermal_runaway as tr
 
 G_VALUES = (0.02, 0.05, 0.1, 0.2, 0.35, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0)
@@ -39,7 +39,7 @@ def main():
             out["short"].append(rec)
             print(rec["chem"], "short", round(rec["P_W"], 2), "W", "runaway" if rec["runaway"] else "no runaway",
                   flush=True)
-    ref.save_json(out, _path.result("runaway_scenarios.json"), indent=1)
+    rs.save_json(out, _path.result("runaway_scenarios.json"), indent=1)
 
 
 if __name__ == "__main__":

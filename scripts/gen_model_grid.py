@@ -5,8 +5,9 @@ import time
 import _path  # noqa: F401
 import numpy as np
 
+from ups_battery_prediction import design as ds
 from ups_battery_prediction import discharge as dc
-from ups_battery_prediction import reference as ref
+from ups_battery_prediction import results as rs
 
 T_GRID = np.arange(0.0, 45.01, 2.5)
 LOAD_GRID = np.round(np.arange(0.2, 1.501, 0.05), 2)
@@ -16,10 +17,10 @@ SOH_GRID = np.array([1.0, 0.9, 0.8, 0.7])
 def main():
     TT, LL, HH = np.meshgrid(T_GRID, LOAD_GRID, SOH_GRID, indexing="ij")
     t0 = time.time()
-    r = dc.simulate(TT.ravel() + 273.15, HH.ravel(), power=ref.P_RATED * LL.ravel(), model="SPMe", thermal="lumped")
+    r = dc.simulate(TT.ravel() + 273.15, HH.ravel(), power=ds.P_RATED * LL.ravel(), model="SPMe", thermal="lumped")
     rt = (r["runtime_s"] / 60).reshape(TT.shape)
     tp = (r["T_max_K"] - 273.15).reshape(TT.shape)
-    ref.save_json(dict(T_C=T_GRID.tolist(), load=LOAD_GRID.tolist(), soh=SOH_GRID.tolist(), runtime_min=rt.tolist(),
+    rs.save_json(dict(T_C=T_GRID.tolist(), load=LOAD_GRID.tolist(), soh=SOH_GRID.tolist(), runtime_min=rt.tolist(),
                        T_peak_C=tp.tolist()), _path.result("model_grid.json"))
     print(rt.shape, f"{time.time() - t0:.0f} s", float(np.nanmin(rt)), float(np.nanmax(rt)), int(np.isnan(rt).sum()))
 

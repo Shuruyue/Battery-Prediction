@@ -10,8 +10,9 @@ Writes results/convergence.json. About twenty minutes on one core.
 import _path  # noqa: F401
 import pybamm
 
+from ups_battery_prediction import design as ds
 from ups_battery_prediction import discharge as dc
-from ups_battery_prediction import reference as ref
+from ups_battery_prediction import results as rs
 
 pybamm.set_logging_level("ERROR")
 T_SPM, I_SPM = 273.15, 10.0
@@ -37,7 +38,7 @@ def spm_case():
 
 
 def tool_case():
-    kw = dict(T_amb=273.15, soh=0.7, power=1.5 * ref.P_RATED, model="SPMe", thermal="lumped")
+    kw = dict(T_amb=273.15, soh=0.7, power=1.5 * ds.P_RATED, model="SPMe", thermal="lumped")
     base = dict(dt=1.0, n_r=30, n_x=(20, 10, 20))
     rows = []
     variations = ([dict(n_r=n) for n in (10, 15, 30, 60, 120)] + [dict(n_x=(n, n // 2, n)) for n in (10, 20, 40, 80)]
@@ -52,7 +53,7 @@ def tool_case():
 
 
 def main():
-    ref.save_json(dict(spm=spm_case(), tool=tool_case()), _path.result("convergence.json"), indent=1)
+    rs.save_json(dict(spm=spm_case(), tool=tool_case()), _path.result("convergence.json"), indent=1)
 
 
 if __name__ == "__main__":

@@ -187,6 +187,7 @@
    "T_peak_C": 252.33541372450077,
    "t_runaway_min": NaN
   },
-  "LFP_critical_C": 206.09072265625002
+  "LFP_critical_C": 206.09072265625002,
+  "LCO_Lopez2015_contents_critical_C": 133.97158203125002
  }
 }

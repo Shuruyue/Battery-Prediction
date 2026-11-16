@@ -101,3 +101,19 @@ def test_variant_replaces_only_what_is_asked():
     assert q.chi(500.0, 300.0) == 1.0 and q.kappa_e is p.kappa_e and q.L_N == p.L_N
     with pytest.raises(KeyError):
         p.variant(not_a_parameter=1.0)
+
+
+def test_pybamm_reports_an_x_averaged_concentration_of_1036_for_a_uniform_1000(pv):
+    # README, Theoretical Background: PyBaMM's SPMe evaluates chi and kappa_e at the x-averaged electrolyte
+    # concentration, which PyBaMM reports as 1036 mol/m3 when the concentration is 1000 mol/m3 everywhere. This is
+    # why the code check against PyBaMM uses concentration-independent chi and kappa_e. If a PyBaMM release changes
+    # this, the test fails and the README and scripts/verify_pybamm.py need another look.
+    import numpy as np
+    import pybamm
+    values = pybamm.ParameterValues("ORegan2022")
+    values["Current function [A]"] = 1e-9
+    sol = pybamm.Simulation(pybamm.lithium_ion.SPMe(), parameter_values=values).solve([0.0, 1.0])
+    c = sol["Electrolyte concentration [mol.m-3]"].entries[:, 0]
+    c_av = float(sol["X-averaged electrolyte concentration [mol.m-3]"].entries[0])
+    assert np.allclose(c, 1000.0, rtol=1e-12)
+    assert c_av == pytest.approx(1036.23, abs=0.01)

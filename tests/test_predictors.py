@@ -1,8 +1,9 @@
 """Predictors: closed-form cases and the finite-sample guarantee of split conformal intervals."""
 import numpy as np
+import pytest
 
 from ups_battery_prediction import predictors as pr
-from ups_battery_prediction.reference import NORMAL
+from ups_battery_prediction.design import NORMAL
 
 
 def test_peukert_passes_through_both_rated_points():
@@ -20,16 +21,25 @@ def test_physics_features_recover_an_exact_power_law():
     assert np.allclose(m.reg.coef_, [-1.1, 1.0, -0.3], atol=1e-10)
 
 
-def test_conformal_interval_covers_at_least_the_nominal_fraction_on_exchangeable_data():
+def test_conformal_quantile_is_the_k_th_smallest_relative_residual():
+    # n = 50, alpha = 0.1: k = ceil(51 x 0.9) = 46; residuals 0.01, 0.02, ..., 0.50 in shuffled order
+    rng = np.random.default_rng(0)
+    r = rng.permutation(np.arange(1, 51) / 100)
+    assert pr.conformal_quantile(1.0 + r, np.ones(50), alpha=0.1) == pytest.approx(0.46, abs=1e-15)
+    # n = 9, alpha = 0.1: (n + 1)(1 - alpha) is exactly 9, so k = 9 (not 10, which does not exist)
+    assert pr.conformal_quantile(1.0 + np.arange(1, 10) / 10, np.ones(9), alpha=0.1) == pytest.approx(0.9, abs=1e-15)
+    assert pr.conformal_quantile(np.full(5, 1.1), np.ones(5), alpha=0.1) == np.inf
+
+
+def test_conformal_coverage_is_k_over_n_plus_one_on_exchangeable_data():
+    # for continuous residuals the coverage of a new point is exactly k / (n + 1) = 46/51 = 0.902
     rng = np.random.default_rng(2)
-    covered = []
-    for _ in range(2000):
-        yhat = np.full(51, 50.0)
-        y = yhat * (1 + 0.05 * rng.standard_normal(51))
-        q = pr.conformal_quantile(y[:50], yhat[:50], alpha=0.1)
-        covered.append(abs(y[50] - yhat[50]) <= q * yhat[50])
-    # guarantee: P(cover) >= 1 - alpha; with n = 50 the expected coverage is 46/51 = 0.902
-    assert np.mean(covered) > 0.88
+    trials = 40000
+    y = 50.0 * (1 + 0.05 * rng.standard_normal((trials, 51)))
+    yhat = np.full(51, 50.0)
+    covered = [abs(row[50] - 50.0) <= pr.conformal_quantile(row[:50], yhat[:50], alpha=0.1) * 50.0 for row in y]
+    se = np.sqrt(0.902 * 0.098 / trials)                                     # 0.0015
+    assert abs(np.mean(covered) - 46 / 51) < 4 * se                         # 47/51 = 0.922 is 13 se away
 
 
 def test_distance_outside_is_zero_inside_and_counts_box_widths_outside():

@@ -249,11 +249,14 @@ def heat_capacity(T):
 
 def variant(**overrides):
     """A copy of this parameter set with some functions or constants replaced, e.g.
-    variant(chi=lambda c, T: chi(1000.0, T)). Used by the code checks against PyBaMM."""
+    variant(chi=lambda c, T: chi(1000.0, T)). Used by the code checks against PyBaMM. Only the names given are
+    replaced: derived constants (A_N, A_P, L_X) are not recomputed. The names replaced are kept in `overrides`, so
+    that a user of the variant can refuse names it does not honour."""
     module = sys.modules[__name__]
     ns = types.SimpleNamespace(**{k: getattr(module, k) for k in dir(module) if not k.startswith("__")})
     for key, value in overrides.items():
         if not hasattr(ns, key):
             raise KeyError(key)
         setattr(ns, key, value)
+    ns.overrides = frozenset(overrides)
     return ns

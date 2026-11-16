@@ -71,3 +71,14 @@ def test_input_checks():
         dc.simulate(298.15, power=1.0, current=1.0)
     with pytest.raises(ValueError):
         dc.simulate(298.15, power=1.0, model="DFN")
+    with pytest.raises(ValueError):          # the cell state of ageing.py would not see a changed geometry
+        dc.simulate(298.15, power=1.0, prm=p.variant(L_N=1.1 * p.L_N))
+
+
+def test_parameter_variant_reaches_the_particles():
+    # a replaced particle radius reaches the particle grids (only the grids: derived constants such as the
+    # interfacial area A_N are not recomputed by params.variant); an empty variant changes nothing
+    kw = dict(T_amb=273.15, soh=1.0, current=10.0, model="SPM", thermal="isothermal", dt=2.0, n_r=20)
+    base = dc.simulate(**kw)["runtime_s"][0]
+    assert dc.simulate(**kw, prm=p.variant())["runtime_s"][0] == base
+    assert abs(dc.simulate(**kw, prm=p.variant(R_N=2.0 * p.R_N))["runtime_s"][0] / base - 1) > 0.02
