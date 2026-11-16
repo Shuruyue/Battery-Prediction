@@ -1,0 +1,192 @@
+{
+ "adiabatic": {
+  "LCO": {
+   "dT_complete": 452.66134815346004,
+   "dT_sim": 451.30893835644224,
+   "dT_from_composition": 451.3089383564469,
+   "steps": 6804
+  },
+  "NMC111": {
+   "dT_complete": 663.7546432413051,
+   "dT_sim": 663.7546432413053,
+   "dT_from_composition": 663.7546432413051,
+   "steps": 7590
+  },
+  "LFP": {
+   "dT_complete": 376.491939763356,
+   "dT_sim": 362.6385106896846,
+   "dT_from_composition": 362.6385106896834,
+   "steps": 5222
+  }
+ },
+ "oven155_solver": {
+  "0.001": {
+   "t_runaway": 2203.6185909975216,
+   "T_peak": 674.9187983223783,
+   "steps": 1331
+  },
+  "0.0001": {
+   "t_runaway": 2206.472526008862,
+   "T_peak": 675.2369210005052,
+   "steps": 2564
+  },
+  "1e-05": {
+   "t_runaway": 2204.692137835122,
+   "T_peak": 675.4093301435246,
+   "steps": 6011
+  },
+  "1e-06": {
+   "t_runaway": 2203.4007219324853,
+   "T_peak": 675.4706235611877,
+   "steps": 14821
+  },
+  "radau": {
+   "t_runaway": 2202.6763140503826,
+   "T_peak": 675.5053611164104,
+   "steps": 2874
+  }
+ },
+ "explicit_euler": {
+  "1": {
+   "stays_physical": false,
+   "first_bad_time": 2208.0
+  },
+  "0.1": {
+   "stays_physical": true,
+   "first_bad_time": null
+  },
+  "0.01": {
+   "stays_physical": true,
+   "first_bad_time": null
+  }
+ },
+ "semenov": {
+  "Ta_crit_tangency": 381.2692862389719,
+  "Ta_crit_ode": 381.2741690514719
+ },
+ "oven": {
+  "LCO_140": {
+   "runaway": false,
+   "T_peak_C": 145.70961255056693,
+   "t_runaway_min": NaN
+  },
+  "LCO_145": {
+   "runaway": false,
+   "T_peak_C": 189.2507980937683,
+   "t_runaway_min": NaN
+  },
+  "LCO_150": {
+   "runaway": true,
+   "T_peak_C": 358.5721492534042,
+   "t_runaway_min": 55.259276253829945
+  },
+  "LCO_155": {
+   "runaway": true,
+   "T_peak_C": 402.2593301435246,
+   "t_runaway_min": 36.74490796537726
+  },
+  "LCO_160": {
+   "runaway": true,
+   "T_peak_C": 421.2183492950679,
+   "t_runaway_min": 29.430318513309775
+  },
+  "LCO_170": {
+   "runaway": true,
+   "T_peak_C": 440.7773264265204,
+   "t_runaway_min": 22.133008344398636
+  },
+  "LCO_180": {
+   "runaway": true,
+   "T_peak_C": 452.02987920077123,
+   "t_runaway_min": 18.078537168050193
+  },
+  "LCO_200": {
+   "runaway": true,
+   "T_peak_C": 466.0521209235287,
+   "t_runaway_min": 13.341156776023613
+  },
+  "LCO_critical_C": 146.37880859375002,
+  "NMC111_140": {
+   "runaway": false,
+   "T_peak_C": 144.87439981626943,
+   "t_runaway_min": NaN
+  },
+  "NMC111_145": {
+   "runaway": false,
+   "T_peak_C": 151.0973048395458,
+   "t_runaway_min": NaN
+  },
+  "NMC111_150": {
+   "runaway": false,
+   "T_peak_C": 157.50079017247236,
+   "t_runaway_min": NaN
+  },
+  "NMC111_155": {
+   "runaway": false,
+   "T_peak_C": 164.09296811956403,
+   "t_runaway_min": NaN
+  },
+  "NMC111_160": {
+   "runaway": false,
+   "T_peak_C": 170.9323860580737,
+   "t_runaway_min": NaN
+  },
+  "NMC111_170": {
+   "runaway": true,
+   "T_peak_C": 559.9165764598187,
+   "t_runaway_min": 92.90423419796714
+  },
+  "NMC111_180": {
+   "runaway": true,
+   "T_peak_C": 697.8367695562577,
+   "t_runaway_min": 24.55890286793128
+  },
+  "NMC111_200": {
+   "runaway": true,
+   "T_peak_C": 725.6900083540136,
+   "t_runaway_min": 15.654686638366211
+  },
+  "NMC111_critical_C": 166.44228515625002,
+  "LFP_140": {
+   "runaway": false,
+   "T_peak_C": 144.81556023893995,
+   "t_runaway_min": NaN
+  },
+  "LFP_145": {
+   "runaway": false,
+   "T_peak_C": 150.9766190381252,
+   "t_runaway_min": NaN
+  },
+  "LFP_150": {
+   "runaway": false,
+   "T_peak_C": 157.26308885225433,
+   "t_runaway_min": NaN
+  },
+  "LFP_155": {
+   "runaway": false,
+   "T_peak_C": 163.63643355908988,
+   "t_runaway_min": NaN
+  },
+  "LFP_160": {
+   "runaway": false,
+   "T_peak_C": 170.06180061719851,
+   "t_runaway_min": NaN
+  },
+  "LFP_170": {
+   "runaway": false,
+   "T_peak_C": 182.9576097192047,
+   "t_runaway_min": NaN
+  },
+  "LFP_180": {
+   "runaway": false,
+   "T_peak_C": 195.80389190867152,
+   "t_runaway_min": NaN
+  },
+  "LFP_200": {
+   "runaway": false,
+   "T_peak_C": 252.33541372450077,
+   "t_runaway_min": NaN
+  },
+  "LFP_critical_C": 206.09072265625002
+ }
+}

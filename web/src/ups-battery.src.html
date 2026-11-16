@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UPS Battery Runtime and Runaway</title>
+<meta name="description" content="How long a UPS battery lasts and whether it can burn: a formula, a physical simulation and machine-learning models compared against one reference, and a thermal-runaway model solved in the page.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: instrument console (house style of Ethanol-Water-VLE) — control rail on the left, readout strip on top, chart cards. */
+:root {
+  --page: #f2f2ee; --surface: #fcfcfb; --surface-2: #f6f6f2; --ink: #141412; --ink-2: #52514e; --muted: #7d7b75;
+  --grid: #e5e4de; --axis: #c3c2b7; --line: rgba(11,11,11,.11);
+  --accent: #2a78d6; --accent-ink: #1c5cab; --accent-soft: #e3eefb;
+  --ref: #141412; --sim: #2a78d6; --formula: #eb6834; --ml: #d03b3b; --phys: #1baf7a; --hyb: #6250d6;
+  --r1: #fbd3c9; --r2: #f4a28c; --r3: #e8704f; --r4: #d03b3b; --r5: #a3252a; --r6: #6e1418;
+  --band: rgba(42,120,214,.10);
+  --good: #006300; --crit: #d03b3b; --warn-mark: #fab219;
+  --font-ui: "IBM Plex Sans", "Noto Sans TC", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0f0f0e; --surface: #1a1a19; --surface-2: #222220; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #8f8d86;
+    --grid: #2c2c2a; --axis: #45443f; --line: rgba(255,255,255,.10);
+    --accent: #3987e5; --accent-ink: #86b6ef; --accent-soft: #16273d;
+    --ref: #f0efec; --sim: #3987e5; --formula: #d95926; --ml: #e66767; --phys: #199e70; --hyb: #8f7fe8;
+    --r1: #4a1a17; --r2: #74251f; --r3: #a3352b; --r4: #d0503d; --r5: #e8826e; --r6: #f6b8a8;
+    --band: rgba(57,135,229,.16);
+    --good: #0ca30c; --crit: #e66767;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0f0f0e; --surface: #1a1a19; --surface-2: #222220; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #8f8d86;
+  --grid: #2c2c2a; --axis: #45443f; --line: rgba(255,255,255,.10);
+  --accent: #3987e5; --accent-ink: #86b6ef; --accent-soft: #16273d;
+  --ref: #f0efec; --sim: #3987e5; --formula: #d95926; --ml: #e66767; --phys: #199e70; --hyb: #8f7fe8;
+  --r1: #4a1a17; --r2: #74251f; --r3: #a3352b; --r4: #d0503d; --r5: #e8826e; --r6: #f6b8a8;
+  --band: rgba(57,135,229,.16);
+  --good: #0ca30c; --crit: #e66767;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--font-ui); font-size: 14px; line-height: 1.5; }
+.app { max-width: 1320px; margin: 0 auto; padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 24px; margin-bottom: 14px; }
+.head h1 { font-size: 1.55rem; font-weight: 600; letter-spacing: -0.01em; }
+.head h1 .en { display: block; font-size: .8rem; font-weight: 500; color: var(--muted); letter-spacing: .03em; margin-bottom: 2px; }
+.head .sys { color: var(--ink-2); font-size: .86rem; max-width: 66ch; margin: 0; }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin-bottom: 14px; overflow-x: auto; }
+.tab { font: inherit; font-size: .9rem; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--ink-2); padding: 8px 12px 9px; cursor: pointer; white-space: nowrap; margin-bottom: -1px; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 500; }
+.layout { display: grid; grid-template-columns: 296px minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 920px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+.rail { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 14px 16px; display: grid; gap: 16px;
+  position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow-y: auto; }
+@media (max-width: 920px) { .rail { position: static; max-height: none; } }
+.grp { display: grid; gap: 10px; }
+.grp > h2 { font-size: .78rem; font-weight: 600; color: var(--muted); letter-spacing: .04em; }
+.presets { display: grid; gap: 6px; }
+.preset { text-align: left; font: inherit; font-size: .84rem; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; cursor: pointer; display: grid; gap: 1px; }
+.preset small { color: var(--muted); font-size: .74rem; }
+.preset:hover { border-color: var(--accent); }
+.preset[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 3px; gap: 3px; }
+.seg button { font: inherit; font-size: .78rem; border: 0; background: transparent; color: var(--ink-2); padding: 5px 6px; border-radius: 6px; cursor: pointer; line-height: 1.25; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--line); font-weight: 500; }
+.ctl { display: grid; gap: 3px; }
+.ctl .row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.ctl label { font-size: .86rem; }
+.ctl output { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: .84rem; }
+.ctl input[type=range] { width: 100%; accent-color: var(--accent); margin: 2px 0 0; }
+.derived { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: .8rem; color: var(--ink-2); background: var(--surface-2); border-radius: 8px; padding: 8px 10px; }
+.derived .num { color: var(--ink); text-align: right; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.ro { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px 11px; min-width: 0; }
+.ro .k { font-size: .76rem; color: var(--muted); letter-spacing: .02em; display: flex; align-items: center; gap: 6px; }
+.ro .k i { width: 10px; height: 3px; border-radius: 2px; flex: none; }
+.ro .v { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: 1.22rem; font-weight: 500; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ro .v small { font-size: .74rem; color: var(--ink-2); font-weight: 400; }
+.ro .s { font-size: .78rem; color: var(--ink-2); margin-top: 2px; }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-size: .74rem; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink-2); white-space: nowrap; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+.pill.good::before { background: var(--good); }
+.pill.bad::before { background: var(--crit); }
+.pill.warn::before { background: var(--warn-mark); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 12px 10px; min-width: 0; }
+.card > h3 { font-size: .92rem; font-weight: 600; }
+.card > .sub { font-size: .78rem; color: var(--muted); margin-top: 1px; }
+.chart { margin-top: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 3px 14px; font-size: .78rem; color: var(--ink-2); margin-top: 8px; }
+.legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.plotbox { position: relative; width: 100%; }
+.plotbox svg { display: block; touch-action: pan-y; }
+.plotbox text.tk { font-family: var(--font-num); font-size: 10.5px; fill: var(--muted); }
+.plotbox text.lab { font-family: var(--font-ui); font-size: 11.5px; fill: var(--ink-2); }
+.plotbox text.ann { font-family: var(--font-ui); font-size: 11px; fill: var(--ink-2); }
+.tip { position: absolute; z-index: 3; pointer-events: none; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(0,0,0,.12);
+  border-radius: 8px; padding: 6px 9px 7px; font-size: .78rem; min-width: 150px; max-width: 260px; }
+.tip .t { color: var(--muted); font-family: var(--font-num); font-size: .74rem; margin-bottom: 3px; }
+.tip .r { display: grid; grid-template-columns: 16px auto 1fr; align-items: center; gap: 6px; line-height: 1.35; }
+.tip .r b { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-weight: 500; color: var(--ink); text-align: right; }
+.tip .r i { font-style: normal; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bars { display: grid; grid-template-columns: minmax(130px, 200px) 74px minmax(0, 1fr); gap: 7px 10px; align-items: center; font-size: .84rem; margin-top: 10px; }
+.bars .nm { color: var(--ink-2); display: flex; align-items: center; gap: 7px; min-width: 0; }
+.bars .nm i { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.bars .val { font-family: var(--font-num); font-variant-numeric: tabular-nums; text-align: right; color: var(--ink); }
+.bars .bar { height: 12px; background: var(--grid); border-radius: 3px; position: relative; overflow: hidden; }
+.bars .bar span { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 0 3px 3px 0; }
+.bars .bar b { position: absolute; top: 5px; height: 2px; background: var(--ink); opacity: .8; }
+.bars .bar b::before, .bars .bar b::after { content: ""; position: absolute; top: -3px; width: 1.5px; height: 8px; background: var(--ink); }
+.bars .bar b::before { left: 0; }
+.bars .bar b::after { right: 0; }
+.bars .bar em { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--ref); }
+.bars .sep { grid-column: 1 / -1; height: 1px; background: var(--line); }
+.note { font-size: .82rem; color: var(--ink-2); background: var(--surface-2); border-radius: 8px; padding: 8px 10px; margin-top: 10px; }
+.answer { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--r); padding: 10px 14px; font-size: .9rem; margin-top: 14px; }
+.answer p { margin: 0; max-width: 80ch; }
+.answer p + p { margin-top: 6px; }
+.cells { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
+.cellbox { border-radius: 8px; border: 1px solid var(--line); padding: 10px 2px; text-align: center; font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: .95rem; }
+.cellbox small { display: block; font-family: var(--font-ui); font-size: .72rem; opacity: .85; }
+.timebar { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.timebar input { flex: 1; accent-color: var(--accent); }
+.play { font: inherit; font-size: .84rem; padding: 4px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); cursor: pointer; }
+.about { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 18px; display: grid; gap: 10px; }
+.about h2 { font-size: 1rem; font-weight: 600; }
+.about p, .about li { max-width: 86ch; margin: 0; color: var(--ink-2); }
+.about ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.about a { color: var(--accent-ink); }
+footer { font-size: .78rem; color: var(--muted); margin-top: 18px; max-width: 100ch; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+<div class="app">
+  <header class="head">
+    <h1><span class="en">UPS backup battery · LG M50 cell (NMC811 / graphite)</span>How long does it last, and can it burn?</h1>
+    <p class="sys">The same question answered by a <b>formula</b>, a <b>physical simulation</b> and <b>machine learning</b>, each scored against one reference model, inside and outside the conditions the tools were built for.</p>
+  </header>
+  <div class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" id="t-run" aria-selected="true" aria-controls="p-run">Runtime</button>
+    <button class="tab" role="tab" id="t-tr" aria-selected="false" aria-controls="p-tr">Thermal runaway</button>
+    <button class="tab" role="tab" id="t-about" aria-selected="false" aria-controls="p-about">About the models</button>
+  </div>
+
+  <section id="p-run" role="tabpanel" aria-labelledby="t-run">
+    <div class="layout">
+      <aside class="rail" aria-label="Outage conditions">
+        <div class="grp"><h2>OUTAGE CONDITIONS</h2>
+          <div class="ctl"><div class="row"><label for="s-t">Room temperature</label><output id="o-t" for="s-t"></output></div>
+            <input type="range" id="s-t" min="0" max="45" step="0.5" value="25"></div>
+          <div class="ctl"><div class="row"><label for="s-l">Load, share of rated power</label><output id="o-l" for="s-l"></output></div>
+            <input type="range" id="s-l" min="20" max="150" step="1" value="60"></div>
+          <div class="ctl"><div class="row"><label for="s-h">State of health</label><output id="o-h" for="s-h"></output></div>
+            <input type="range" id="s-h" min="70" max="100" step="0.5" value="100"></div>
+        </div>
+        <div class="grp"><h2>JUMP TO</h2>
+          <div class="presets" id="presets">
+            <button type="button" class="preset" data-p="25,60,100,T">Normal day<small>25 °C, 60 % load, new cells</small></button>
+            <button type="button" class="preset" data-p="0,100,100,T">Cold room, full load<small>0 °C, rated power</small></button>
+            <button type="button" class="preset" data-p="25,150,100,L">Overload<small>150 % of rated power</small></button>
+            <button type="button" class="preset" data-p="25,60,70,H">Old battery<small>70 % of its capacity left</small></button>
+            <button type="button" class="preset" data-p="45,150,70,L">Hot room, old battery, overload<small>45 °C, 150 % load, 70 % health</small></button>
+          </div></div>
+        <div class="grp"><h2>TRAINING RANGE OF THE LEARNED MODELS</h2>
+          <div class="derived"><span>temperature</span><span class="num">18–28 °C</span><span>load</span><span class="num">30–80 %</span><span>state of health</span><span class="num">90–100 %</span></div></div>
+      </aside>
+      <div>
+        <div class="readouts" aria-live="polite">
+          <div class="ro"><div class="k"><i style="background:var(--ref)"></i>Reference (DFN, PyBaMM)</div><div class="v" id="r-ref"></div><div class="s" id="r-ref-s"></div></div>
+          <div class="ro"><div class="k"><i style="background:var(--sim)"></i>Simulation</div><div class="v" id="r-sim"></div><div class="s">no fitting to data</div></div>
+          <div class="ro"><div class="k"><i style="background:var(--formula)"></i>Formula (Peukert)</div><div class="v" id="r-for"></div><div class="s">from two datasheet points</div></div>
+          <div class="ro"><div class="k">Cell temperature at the end</div><div class="v" id="r-temp"></div><div class="s">simulation, self-heating included</div></div>
+          <div class="ro"><div class="k">Learned models</div><div class="v" id="r-range"></div><div class="s" id="r-range-s"></div></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><h3>Every tool at this point</h3>
+            <div class="sub">Minutes until the cell reaches 2.5 V. Whiskers: the 90 % conformal interval each learned model would give. Vertical mark: reference.</div>
+            <div class="bars" id="bars"></div></div>
+          <div class="card"><h3>Sweep one condition, hold the other two</h3>
+            <div class="seg" id="axis" role="group" aria-label="Condition to sweep" style="margin-top:8px">
+              <button type="button" data-v="T" aria-pressed="true">Temperature</button><button type="button" data-v="L" aria-pressed="false">Load</button><button type="button" data-v="H" aria-pressed="false">Health</button></div>
+            <div class="chart" id="p-sweep"></div>
+            <div class="legend" id="lg-sweep"></div>
+            <div class="note">Shaded band: the training range. Dots: the reference, where it was run.</div></div>
+        </div>
+        <div class="answer" id="answer"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="p-tr" role="tabpanel" aria-labelledby="t-tr" hidden>
+    <div class="layout">
+      <aside class="rail" aria-label="Thermal-runaway settings">
+        <div class="grp"><h2>ONE CELL IN AN OVEN</h2>
+          <div class="seg" id="chem1" role="group" aria-label="Cathode"><button type="button" data-v="LCO" aria-pressed="true">LCO</button><button type="button" data-v="NMC111" aria-pressed="false">NMC111</button><button type="button" data-v="LFP" aria-pressed="false">LFP</button></div>
+          <div class="ctl"><div class="row"><label for="toven">Oven temperature</label><output id="toven-o" for="toven"></output></div><input type="range" id="toven" min="120" max="230" step="1" value="155"></div>
+          <div class="ctl"><div class="row"><label for="hconv">Cooling, h</label><output id="hconv-o" for="hconv"></output></div><input type="range" id="hconv" min="5" max="40" step="0.01" value="7.17"></div>
+          <div class="seg" id="solver" role="group" aria-label="Time integration"><button type="button" data-v="implicit" aria-pressed="true">Implicit, adaptive</button><button type="button" data-v="explicit" aria-pressed="false">Explicit, 1 s</button></div>
+        </div>
+        <div class="grp"><h2>SIX CELLS IN A ROW</h2>
+          <div class="seg" id="chem2" role="group" aria-label="Cathode of the row"><button type="button" data-v="LCO" aria-pressed="false">LCO</button><button type="button" data-v="NMC111" aria-pressed="true">NMC111</button><button type="button" data-v="LFP" aria-pressed="false">LFP</button></div>
+          <div class="ctl"><div class="row"><label for="gcond">Thermal contact between cells</label><output id="gcond-o" for="gcond"></output></div><input type="range" id="gcond" min="-1.7" max="0.5" step="0.05" value="-0.3"></div>
+        </div>
+        <div class="note">18650 LiCoO<sub>2</sub> cell of Kim et al.; the NMC111 and LFP variants change only the cathode reaction. No NMC811 kinetics of this form were found, so the LG M50 of the runtime tab is not represented.</div>
+      </aside>
+      <div>
+        <div class="readouts" aria-live="polite">
+          <div class="ro"><div class="k">Oven test</div><div class="v" id="v-oven"></div><div class="s" id="v-oven-s"></div></div>
+          <div class="ro"><div class="k">Peak temperature</div><div class="v" id="v-peak"></div><div class="s">lumped cell, no venting: runs high</div></div>
+          <div class="ro"><div class="k">Lowest oven temperature for runaway</div><div class="v" id="v-crit"></div><div class="s">bisection in the page</div></div>
+          <div class="ro"><div class="k">Time steps</div><div class="v" id="v-steps"></div><div class="s" id="v-steps-s">adaptive backward Euler</div></div>
+          <div class="ro"><div class="k">Row of six cells</div><div class="v" id="v-row"></div><div class="s" id="v-row-s"></div></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><h3>Cell temperature in the oven</h3><div class="chart" id="p-temp"></div><div class="legend" id="lg-temp"></div></div>
+          <div class="card"><h3>Heat released against heat removed</h3><div class="chart" id="p-sem"></div>
+            <div class="legend"><span><svg width="16" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="var(--crit)" stroke-width="2.4"/></svg>released by the four reactions</span><span><svg width="16" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="var(--sim)" stroke-width="2.4"/></svg>removed by air and radiation</span></div>
+            <div class="note">Runaway is the moment the reactions release heat faster than the surroundings take it away. The second curve starts once the cell is hotter than the oven.</div></div>
+          <div class="card"><h3>Six cells, the first one at 250 °C: <span id="tnow" class="num"></span></h3>
+            <div class="cells" id="cells"></div>
+            <div class="timebar"><button type="button" class="play" id="play">Play</button><input type="range" id="tscrub" min="0" max="1000" step="1" value="0" aria-label="Time"></div></div>
+          <div class="card"><h3>Temperature of each cell</h3><div class="chart" id="p-row"></div><div class="legend" id="lg-row"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="p-about" role="tabpanel" aria-labelledby="t-about" hidden>
+    <div class="about">
+      <h2>What each tool is</h2>
+      <ul>
+        <li><b>Reference</b>: the Doyle–Fuller–Newman model with a lumped thermal model, solved with PyBaMM using the LG M50 parameters of O’Regan et al. (2022), cooled by 10 W/(m² K). It plays the real battery.</li>
+        <li><b>Simulation</b>: a single-particle model with electrolyte (SPMe) and the same lumped thermal model, written from scratch in NumPy; it shares the reference’s parameters and is not fitted to any data.</li>
+        <li><b>Formula</b>: Peukert’s law through two rated points (25 °C, new cell, 50 % and 100 % load).</li>
+        <li><b>Learned models</b>: gradient boosting, a neural network and a Gaussian process (scikit-learn), trained on 150 noisy discharges inside the training range; <b>physics features</b> is a linear fit of log t on log load, log health and 1/T; <b>simulation + data</b> learns a correction to the simulation.</li>
+      </ul>
+      <h2>Why the cold room is not as bad as an isothermal model says</h2>
+      <p id="about-heat"></p>
+      <h2>Limits</h2>
+      <p>The reference is itself a model, not a measurement, and it shares its parameters with the simulation, which favours the simulation. The cooling coefficient of a cell inside a UPS cabinet is assumed, not measured. Ageing is loss of lithium plus an SEI film resistance only. The thermal-runaway model is a lumped 18650 cell without venting.</p>
+      <p>Source code, data and checks: <a href="https://github.com/Shuruyue/UPS-Battery-Prediction">github.com/Shuruyue/UPS-Battery-Prediction</a>.</p>
+    </div>
+  </section>
+  <footer>Cell parameters: O’Regan et al., Electrochim. Acta 425 (2022) 140700; Chen et al., J. Electrochem. Soc. 167 (2020) 080534. Reference solver: PyBaMM (Sulzer et al., J. Open Res. Softw. 9 (2021) 14). Thermal runaway: Hatchard et al., J. Electrochem. Soc. 148 (2001) A755; Kim, Pesaran and Spotnitz, J. Power Sources 170 (2007) 476; cathodes after Peng and Jiang, Int. J. Heat Mass Transfer 103 (2016) 1008. Every number in this page is computed by the scripts of the repository.</footer>
+</div>
+
+<script>/*__CHART__*/</script>
+<script>
+// ---- physics: begin
+/*__MODEL__*/
+// ---- physics: end
+</script>
+<script>/*__DATA__*/</script>
+<script>
+(function () {
+  "use strict";
+  var D = window.RUNTIME_DATA, $ = function (id) { return document.getElementById(id); }, K = 273.15;
+  var css = function (v) { return "var(" + v + ")"; };
+
+  // ---------------- tabs
+  var TABS = [["t-run", "p-run"], ["t-tr", "p-tr"], ["t-about", "p-about"]], trReady = false;
+  var HASH = { "#runtime": "t-run", "#thermal-runaway": "t-tr", "#about": "t-about" };
+  function showTab(id) {
+    TABS.forEach(function (u) { $(u[0]).setAttribute("aria-selected", u[0] === id ? "true" : "false"); $(u[1]).hidden = u[0] !== id; });
+    if (id === "t-tr" && !trReady) { trReady = true; runOven(); runRow(); }
+    if (id === "t-run") draw();
+  }
+  TABS.forEach(function (t) { $(t[0]).addEventListener("click", function () { showTab(t[0]); }); });
+  function seg(id, cb) {
+    $(id).addEventListener("click", function (ev) {
+      var b = ev.target.closest("button"); if (!b) return;
+      Array.prototype.forEach.call($(id).children, function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+      cb(b.dataset.v);
+    });
+  }
+
+  // ---------------- runtime
+  var nT = D.T.length, nL = D.load.length, nH = D.soh.length;
+  var TOOLS = [
+    { name: "Simulation", key: "Simulation", color: "--sim" },
+    { name: "Formula (Peukert)", key: null, color: "--formula" },
+    { name: "Gradient boosting", key: "Gradient boosting", color: "--ml", dash: "", learned: true },
+    { name: "Neural network", key: "Neural network", color: "--ml", dash: "6 4", learned: true },
+    { name: "Gaussian process", key: "Gaussian process", color: "--ml", dash: "2 3", learned: true },
+    { name: "Physics features", key: "Physics features", color: "--phys", learned: true },
+    { name: "Simulation + data", key: "Simulation + data", color: "--hyb", learned: true }];
+  function frac(arr, v, desc) {
+    var n = arr.length, i;
+    if (desc) { for (i = 0; i < n - 2 && v < arr[i + 1]; i++); return [i, Math.max(0, Math.min(1, (arr[i] - v) / (arr[i] - arr[i + 1])))]; }
+    for (i = 0; i < n - 2 && v > arr[i + 1]; i++);
+    return [i, Math.max(0, Math.min(1, (v - arr[i]) / (arr[i + 1] - arr[i])))];
+  }
+  function interp(a, T, L, H) {              // trilinear interpolation on the grid (soh descending)
+    var t = frac(D.T, T), l = frac(D.load, L), h = frac(D.soh, H, true), s = 0;
+    for (var i = 0; i < 2; i++) for (var j = 0; j < 2; j++) for (var k = 0; k < 2; k++) {
+      var w = (i ? t[1] : 1 - t[1]) * (j ? l[1] : 1 - l[1]) * (k ? h[1] : 1 - h[1]);
+      if (w) s += w * a[((t[0] + i) * nL + (l[0] + j)) * nH + (h[0] + k)];
+    }
+    return s;
+  }
+  function predict(tool, T, L, H) { return tool.key ? interp(D.models[tool.key], T, L, H) : D.peukert.t_rated * H * Math.pow(L, -D.peukert.k); }
+  function reference(T, L, H) {
+    for (var i = 0; i < D.reference.length; i++) { var r = D.reference[i];
+      if (Math.abs(r.T - T) < 0.26 && Math.abs(r.load - L) < 0.006 && Math.abs(r.soh - H) < 0.003) return r.t; }
+    return null;
+  }
+  var axis = "T";
+  function state() { return { T: +$("s-t").value, L: +$("s-l").value / 100, H: +$("s-h").value / 100 }; }
+  function inside(s) { return s.T >= D.normal.T[0] && s.T <= D.normal.T[1] && s.L >= D.normal.load[0] - 1e-9 && s.L <= D.normal.load[1] + 1e-9 && s.H >= D.normal.soh[0] - 1e-9; }
+  function mins(v) { return v.toFixed(1) + "<small> min</small>"; }
+  function pct(v) { return v.toFixed(v >= 0.1 ? 1 : 2) + " %"; }
+  function draw() {
+    var s = state();
+    $("o-t").textContent = s.T.toFixed(1) + " °C"; $("o-l").textContent = (s.L * 100).toFixed(0) + " %"; $("o-h").textContent = (s.H * 100).toFixed(1) + " %";
+    Array.prototype.forEach.call($("presets").children, function (b) {
+      var p = b.dataset.p.split(","); b.setAttribute("aria-pressed", +p[0] === s.T && +p[1] === s.L * 100 && +p[2] === Math.round(s.H * 1000) / 10 ? "true" : "false"); });
+    var ins = inside(s), ref = reference(s.T, s.L, s.H), vals = TOOLS.map(function (t) { return predict(t, s.T, s.L, s.H); });
+    $("r-ref").innerHTML = ref !== null ? mins(ref) : "–";
+    $("r-ref-s").textContent = ref !== null ? "run at exactly this point" : "not run at this point";
+    $("r-sim").innerHTML = mins(vals[0]); $("r-for").innerHTML = mins(vals[1]);
+    $("r-temp").innerHTML = interp(D.T_peak, s.T, s.L, s.H).toFixed(0) + "<small> °C</small>";
+    $("r-range").innerHTML = '<span class="pill ' + (ins ? "good" : "bad") + '">' + (ins ? "inside" : "outside") + "</span>";
+    $("r-range-s").textContent = ins ? "the training range covers this point" : "extrapolating, and they do not say so";
+    var mx = Math.max.apply(null, vals.concat(ref || 0, 30).map(function (v) { return isFinite(v) ? v : 0; })) * 1.06, html = "";
+    TOOLS.forEach(function (t, i) {
+      var v = vals[i], q = D.q[t.key], lo = q ? v * (1 - q) : null, hi = q ? v * (1 + q) : null;
+      html += '<div class="nm"><i style="background:' + css(t.color) + '"></i><span>' + t.name + '</span></div><div class="val">' + (v > 0 ? v.toFixed(1) : "< 0") + '</div><div class="bar" style="color:' + css(t.color) + '">' +
+        '<span style="width:' + Math.max(0, Math.min(100, 100 * v / mx)) + '%;background:' + css(t.color) + '"></span>' +
+        (q ? '<b style="left:' + Math.max(0, 100 * lo / mx) + '%;width:' + Math.max(0, 100 * (Math.min(hi, mx) - Math.max(lo, 0)) / mx) + '%"></b>' : "") +
+        (ref !== null ? '<em style="left:calc(' + (100 * ref / mx) + '% - 1px)"></em>' : "") + "</div>";
+      if (i === 1) html += '<div class="sep"></div>';
+    });
+    $("bars").innerHTML = html;
+    var lo, hi, lab, band, cur, fx, xs = [], i;
+    if (axis === "T") { lo = 0; hi = 45; lab = "room temperature (°C)"; band = [D.normal.T[0], D.normal.T[1]]; cur = s.T; fx = function (x) { return [x, s.L, s.H]; }; }
+    else if (axis === "L") { lo = 20; hi = 150; lab = "load (% of rated power)"; band = [100 * D.normal.load[0], 100 * D.normal.load[1]]; cur = s.L * 100; fx = function (x) { return [s.T, x / 100, s.H]; }; }
+    else { lo = 70; hi = 100; lab = "state of health (%)"; band = [100 * D.normal.soh[0], 100]; cur = s.H * 100; fx = function (x) { return [s.T, s.L, x / 100]; }; }
+    for (i = 0; i <= 90; i++) xs.push(lo + (hi - lo) * i / 90);
+    var series = [], top = 0, lg = "";
+    TOOLS.forEach(function (t) {
+      var ys = xs.map(function (x) { var a = fx(x); return predict(t, a[0], a[1], a[2]); });
+      series.push({ name: t.name, color: css(t.color), x: xs, y: ys, dash: t.dash || (t.key ? "" : "") });
+      top = Math.max(top, predict(t, s.T, s.L, s.H));
+      lg += '<span><svg width="16" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="' + css(t.color) + '" stroke-width="2.4"' + (t.dash ? ' stroke-dasharray="4 3"' : "") + "/></svg>" + t.name + "</span>";
+    });
+    $("lg-sweep").innerHTML = lg + '<span><svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="var(--ref)"/></svg>reference</span>';
+    var rx = [], ry = [];
+    D.reference.forEach(function (r) {
+      var ok = axis === "T" ? Math.abs(r.load - s.L) < 0.006 && Math.abs(r.soh - s.H) < 0.003 : axis === "L" ? Math.abs(r.T - s.T) < 0.26 && Math.abs(r.soh - s.H) < 0.003 : Math.abs(r.T - s.T) < 0.26 && Math.abs(r.load - s.L) < 0.006;
+      if (ok) { rx.push(axis === "T" ? r.T : axis === "L" ? r.load * 100 : r.soh * 100); ry.push(r.t); top = Math.max(top, r.t); }
+    });
+    var ymax = Math.min(400, Math.max(60, Math.ceil(top * 1.6 / 20) * 20));
+    var ch = Chart.lineChart($("p-sweep"), { series: series, xDomain: [lo, hi], yDomain: [0, ymax], xLabel: lab, yLabel: "runtime (min)", height: 330,
+      vLines: [{ x: cur, label: "now" }], fmtTip: function (v) { return v.toFixed(1) + " min"; }, fmtTipX: function (v) { return v.toFixed(1); }, title: "Predicted runtime against " + lab });
+    var svg = $("p-sweep").querySelector("svg"), NS = "http://www.w3.org/2000/svg";
+    var r = document.createElementNS(NS, "rect");
+    r.setAttribute("x", ch.X(band[0])); r.setAttribute("y", ch.Y(ymax)); r.setAttribute("width", ch.X(band[1]) - ch.X(band[0])); r.setAttribute("height", ch.Y(0) - ch.Y(ymax));
+    r.setAttribute("fill", "var(--band)"); svg.insertBefore(r, svg.firstChild);
+    rx.forEach(function (x, k) { if (ry[k] > ymax) return; var c = document.createElementNS(NS, "circle"); c.setAttribute("cx", ch.X(x)); c.setAttribute("cy", ch.Y(ry[k])); c.setAttribute("r", 4);
+      c.setAttribute("fill", "var(--ref)"); c.setAttribute("stroke", "var(--surface)"); c.setAttribute("stroke-width", 1.5); c.setAttribute("pointer-events", "none"); svg.appendChild(c); });
+    var sim = vals[0], err = ref !== null ? 100 * (sim / ref - 1) : null, worst = 0, worstName = "";
+    TOOLS.forEach(function (t, k) { if (t.learned && ref !== null) { var e = Math.abs(vals[k] / ref - 1); if (e > worst) { worst = e; worstName = t.name; } } });
+    $("answer").innerHTML = "<p>" + (ref !== null
+      ? "At this point the reference gives <b>" + ref.toFixed(1) + " min</b>; the simulation is off by " + pct(Math.abs(err)) + (ins ? ", and every learned model is within its training range." : ", and the worst learned model, " + worstName.toLowerCase() + ", by " + (100 * worst).toFixed(0) + " %.")
+      : "The reference was not run at this exact point; the presets and the dots of the sweep chart show where it was.") + "</p>" +
+      "<p>" + (ins ? "Inside the training range all tools agree to a few per cent. Move one slider outside the shaded band to see the learned models diverge." :
+      "Outside the training range the learned models extrapolate without warning: their 90 % intervals stay as narrow as inside. The simulation and the physics features carry the mechanism with them.") + "</p>";
+  }
+  ["s-t", "s-l", "s-h"].forEach(function (id) { $(id).addEventListener("input", draw); });
+  function setAxis(v) { axis = v; Array.prototype.forEach.call($("axis").children, function (b) { b.setAttribute("aria-pressed", b.dataset.v === v ? "true" : "false"); }); }
+  seg("axis", function (v) { axis = v; draw(); });
+  $("presets").addEventListener("click", function (ev) {
+    var b = ev.target.closest("button"); if (!b) return; var p = b.dataset.p.split(",");
+    $("s-t").value = p[0]; $("s-l").value = p[1]; $("s-h").value = p[2]; setAxis(p[3]); draw();
+  });
+  $("about-heat").textContent = D.about_heat;
+  setTimeout(function () { if (HASH[location.hash]) showTab(HASH[location.hash]); }, 0);   // link to a tab, e.g. #thermal-runaway
+
+  // ---------------- thermal runaway
+  var st = { chem1: "LCO", solver: "implicit", chem2: "NMC111" }, critCache = {};
+  function minutes(s) { return (s / 60).toFixed(1) + " min"; }
+  function runOven() {
+    var c = TR.CHEM[st.chem1], Tov = +$("toven").value + K, h = +$("hconv").value, tEnd = 7200;
+    $("toven-o").textContent = $("toven").value + " °C"; $("hconv-o").textContent = h.toFixed(1) + " W/(m² K)";
+    var imp = TR.ovenTest(c, Tov, { h: h, tEnd: tEnd, rtol: 1e-4 });
+    var series = [{ name: "implicit", color: css("--sim"), x: imp.t.map(function (v) { return v / 60; }), y: imp.y.map(function (v) { return v[0] - K; }) }];
+    var lg = '<span><svg width="16" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="var(--sim)" stroke-width="2.4"/></svg>implicit, adaptive step</span>';
+    $("v-steps").textContent = imp.steps; $("v-steps-s").textContent = "adaptive backward Euler";
+    if (st.solver === "explicit") {
+      var ex = TR.ovenTest(c, Tov, { h: h, tEnd: tEnd, explicit: true, dt: 1 });
+      series.push({ name: "explicit", color: css("--formula"), dash: "7 5", x: ex.t.map(function (v) { return v / 60; }), y: ex.y.map(function (v) { return v[0] - K; }) });
+      lg += '<span><svg width="16" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="var(--formula)" stroke-width="2.4" stroke-dasharray="4 3"/></svg>explicit Euler, 1 s step' + (ex.blewAt ? ": overflows at " + minutes(ex.blewAt) : "") + "</span>";
+      $("v-steps").textContent = imp.steps + " / " + (ex.t.length - 1); $("v-steps-s").textContent = "implicit / explicit";
+    }
+    $("lg-temp").innerHTML = lg;
+    var top = Math.max(300, Math.ceil((imp.peak - K + 40) / 100) * 100);
+    Chart.lineChart($("p-temp"), { series: series, xDomain: [0, tEnd / 60], yDomain: [0, top], xLabel: "time (min)", yLabel: "cell temperature (°C)",
+      hLines: [{ y: Tov - K, label: "oven" }], fmtTip: function (v) { return v.toFixed(0) + " °C"; }, fmtTipX: function (v) { return v.toFixed(1) + " min"; }, height: 300, title: "Cell temperature against time" });
+    $("v-oven").innerHTML = '<span class="pill ' + (imp.runaway ? "bad" : "good") + '">' + (imp.runaway ? "runaway" : "no runaway") + "</span>";
+    $("v-oven-s").textContent = imp.runaway ? "after " + minutes(imp.tRunaway) + " in the oven" : "settles near the oven temperature";
+    $("v-peak").innerHTML = (imp.peak - K).toFixed(0) + "<small> °C</small>";
+    var gen = [], loss = [];
+    imp.y.forEach(function (yy) { var pw = TR.powers(c, yy, Tov, h); gen.push(pw[0]); loss.push(pw[1] > 0 ? pw[1] : NaN); });
+    Chart.lineChart($("p-sem"), { series: [{ name: "released", color: css("--crit"), x: series[0].x, y: gen }, { name: "removed", color: css("--sim"), x: series[0].x, y: loss }],
+      xDomain: [0, tEnd / 60], yDomain: [0.01, 1e5], yLog: true, xLabel: "time (min)", yLabel: "power (W)",
+      fmtTip: function (v) { return (v >= 10 ? v.toFixed(0) : v.toPrecision(2)) + " W"; }, fmtTipX: function (v) { return v.toFixed(1) + " min"; }, height: 300, title: "Heat released and removed against time" });
+    var key = st.chem1 + "|" + h;
+    $("v-crit").innerHTML = critCache[key] || "…";
+    clearTimeout(runOven.t);
+    if (!critCache[key]) runOven.t = setTimeout(function () {
+      critCache[key] = (TR.criticalOven(c, { h: h, rtol: 2e-4 }) - K).toFixed(0) + "<small> °C</small>";
+      if (st.chem1 + "|" + (+$("hconv").value) === key) $("v-crit").innerHTML = critCache[key];
+    }, 250);
+  }
+  var row = null, playing = null, ROWCOL = ["--r6", "--r5", "--r4", "--r3", "--r2", "--r1"];
+  function heat(Tc) {
+    var f = Math.max(0, Math.min(1, (Tc - 25) / 675)), a = [240, 239, 236], b = [176, 32, 28];
+    var rgb = a.map(function (v, i) { return Math.round(v + (b[i] - v) * Math.pow(f, 0.7)); });
+    return { bg: "rgb(" + rgb.join(",") + ")", fg: f > 0.38 ? "#ffffff" : "#1b1f24" };
+  }
+  function runRow() {
+    var c = TR.CHEM[st.chem2], G = Math.pow(10, +$("gcond").value);
+    $("gcond-o").textContent = (G < 1 ? G.toFixed(2) : G.toFixed(1)) + " W/K";
+    row = TR.propagation(c, { G: G, tEnd: 1500 });
+    var series = [], lg = "", i;
+    for (i = 0; i < 6; i++) {
+      series.push({ name: "cell " + (i + 1), color: css(ROWCOL[i]), x: row.t.map(function (v) { return v / 60; }), y: row.y.map(function (v) { return v[i * TR.NS] - K; }) });
+      lg += '<span><svg width="16" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="var(' + ROWCOL[i] + ')" stroke-width="2.4"/></svg>cell ' + (i + 1) + "</span>";
+    }
+    $("lg-row").innerHTML = lg;
+    Chart.lineChart($("p-row"), { series: series, xDomain: [0, 25], yDomain: [0, 900], xLabel: "time (min)", yLabel: "temperature (°C)",
+      fmtTip: function (v) { return v.toFixed(0) + " °C"; }, fmtTipX: function (v) { return v.toFixed(1) + " min"; }, height: 300, title: "Temperature of six cells against time" });
+    $("v-row").innerHTML = row.nRun + "<small> of 6 in runaway</small>";
+    $("v-row-s").textContent = row.nRun === 6 ? "the last cell goes after " + minutes(Math.max.apply(null, row.tRun)) : row.nRun > 1 ? "the fire spreads part of the way" : "the fire stays in the first cell";
+    drawCells();
+  }
+  function drawCells() {
+    if (!row) return;
+    var t = +$("tscrub").value / 1000 * 1500, lo = 0, hi = row.t.length - 1;
+    while (hi - lo > 1) { var m = (lo + hi) >> 1; if (row.t[m] <= t) lo = m; else hi = m; }
+    var f = row.t[hi] > row.t[lo] ? (t - row.t[lo]) / (row.t[hi] - row.t[lo]) : 0, html = "";
+    for (var i = 0; i < 6; i++) {
+      var Tc = row.y[lo][i * TR.NS] + f * (row.y[hi][i * TR.NS] - row.y[lo][i * TR.NS]) - K, col = heat(Tc);
+      html += '<div class="cellbox" style="background:' + col.bg + ";color:" + col.fg + '"><small>cell ' + (i + 1) + "</small>" + Tc.toFixed(0) + " °C</div>";
+    }
+    $("cells").innerHTML = html; $("tnow").textContent = minutes(t);
+  }
+  $("play").addEventListener("click", function () {
+    if (playing) { clearInterval(playing); playing = null; $("play").textContent = "Play"; return; }
+    if (+$("tscrub").value >= 1000) $("tscrub").value = 0;
+    $("play").textContent = "Pause";
+    playing = setInterval(function () {
+      var v = Math.min(1000, +$("tscrub").value + 4); $("tscrub").value = v; drawCells();
+      if (v >= 1000) { clearInterval(playing); playing = null; $("play").textContent = "Play"; }
+    }, 40);
+  });
+  $("tscrub").addEventListener("input", drawCells);
+  seg("chem1", function (v) { st.chem1 = v; runOven(); }); seg("solver", function (v) { st.solver = v; runOven(); });
+  seg("chem2", function (v) { st.chem2 = v; $("tscrub").value = 0; runRow(); });
+  $("toven").addEventListener("input", runOven); $("hconv").addEventListener("input", runOven);
+  $("gcond").addEventListener("input", function () { clearTimeout(runRow.t); $("gcond-o").textContent = "…"; runRow.t = setTimeout(runRow, 60); });
+  var rz; window.addEventListener("resize", function () { clearTimeout(rz); rz = setTimeout(function () { if (!$("p-run").hidden) draw(); if (trReady && !$("p-tr").hidden) { runOven(); runRow(); } }, 150); });
+  draw();
+})();
+</script>

@@ -1,0 +1,940 @@
+{
+ "points": [
+  [
+   0.0,
+   1.5,
+   0.7
+  ],
+  [
+   0.0,
+   1.5,
+   1.0
+  ],
+  [
+   0.0,
+   1.0,
+   1.0
+  ],
+  [
+   10.0,
+   1.5,
+   0.7
+  ],
+  [
+   45.0,
+   1.5,
+   0.7
+  ],
+  [
+   25.0,
+   0.2,
+   1.0
+  ]
+ ],
+ "meshes": [
+  {
+   "x_n": 20,
+   "x_s": 10,
+   "x_p": 20,
+   "r_n": 40,
+   "r_p": 40
+  },
+  {
+   "x_n": 20,
+   "x_s": 10,
+   "x_p": 20,
+   "r_n": 80,
+   "r_p": 80
+  },
+  {
+   "x_n": 20,
+   "x_s": 10,
+   "x_p": 20,
+   "r_n": 160,
+   "r_p": 160
+  },
+  {
+   "x_n": 20,
+   "x_s": 10,
+   "x_p": 20,
+   "r_n": 320,
+   "r_p": 320
+  },
+  {
+   "x_n": 40,
+   "x_s": 20,
+   "x_p": 40,
+   "r_n": 40,
+   "r_p": 40
+  },
+  {
+   "x_n": 40,
+   "x_s": 20,
+   "x_p": 40,
+   "r_n": 80,
+   "r_p": 80
+  },
+  {
+   "x_n": 40,
+   "x_s": 20,
+   "x_p": 40,
+   "r_n": 160,
+   "r_p": 160
+  },
+  {
+   "x_n": 40,
+   "x_s": 20,
+   "x_p": 40,
+   "r_n": 320,
+   "r_p": 320
+  }
+ ],
+ "runs": [
+  {
+   "runtime_min": 20.473110627619242,
+   "v_end": 2.4999999999999245,
+   "T_peak_C": 65.30482000877265,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 40,
+    "r_p": 40
+   },
+   "T_C": 0.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 16.977830171585083
+  },
+  {
+   "runtime_min": 29.951274704903426,
+   "v_end": 2.499999999999999,
+   "T_peak_C": 38.91007463180091,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 40,
+    "r_p": 40
+   },
+   "T_C": 0.0,
+   "load": 1.5,
+   "soh": 1.0,
+   "wall_s": 19.737902402877808
+  },
+  {
+   "runtime_min": 49.062309502438325,
+   "v_end": 2.4999999999999987,
+   "T_peak_C": 27.43322871767873,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 40,
+    "r_p": 40
+   },
+   "T_C": 0.0,
+   "load": 1.0,
+   "soh": 1.0,
+   "wall_s": 19.549461603164673
+  },
+  {
+   "runtime_min": 21.032934352490688,
+   "v_end": 2.5,
+   "T_peak_C": 70.65708452153018,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 40,
+    "r_p": 40
+   },
+   "T_C": 10.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 17.213016748428345
+  },
+  {
+   "runtime_min": 22.27919052147836,
+   "v_end": 2.499999999999999,
+   "T_peak_C": 95.67943371208787,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 40,
+    "r_p": 40
+   },
+   "T_C": 45.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 18.67152690887451
+  },
+  {
+   "runtime_min": 290.9942516365788,
+   "v_end": 2.499999999999492,
+   "T_peak_C": 27.941361426703168,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 40,
+    "r_p": 40
+   },
+   "T_C": 25.0,
+   "load": 0.2,
+   "soh": 1.0,
+   "wall_s": 24.840864181518555
+  },
+  {
+   "runtime_min": 20.57898287417722,
+   "v_end": 2.5,
+   "T_peak_C": 64.78988818392571,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 80,
+    "r_p": 80
+   },
+   "T_C": 0.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 30.721073865890503
+  },
+  {
+   "runtime_min": 31.28650168184316,
+   "v_end": 2.4999999999928773,
+   "T_peak_C": 37.222913996752084,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 80,
+    "r_p": 80
+   },
+   "T_C": 0.0,
+   "load": 1.5,
+   "soh": 1.0,
+   "wall_s": 35.755584716796875
+  },
+  {
+   "runtime_min": 49.98487525537369,
+   "v_end": 2.499999999999527,
+   "T_peak_C": 26.964793862191414,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 80,
+    "r_p": 80
+   },
+   "T_C": 0.0,
+   "load": 1.0,
+   "soh": 1.0,
+   "wall_s": 42.16063094139099
+  },
+  {
+   "runtime_min": 21.101494894043647,
+   "v_end": 2.499999999999999,
+   "T_peak_C": 70.31828687722543,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 80,
+    "r_p": 80
+   },
+   "T_C": 10.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 31.4130380153656
+  },
+  {
+   "runtime_min": 22.286012973578536,
+   "v_end": 2.4999999999999067,
+   "T_peak_C": 95.61241904016174,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 80,
+    "r_p": 80
+   },
+   "T_C": 45.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 35.85810160636902
+  },
+  {
+   "runtime_min": 290.9748508804631,
+   "v_end": 2.4999999999997806,
+   "T_peak_C": 27.939705902547757,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 80,
+    "r_p": 80
+   },
+   "T_C": 25.0,
+   "load": 0.2,
+   "soh": 1.0,
+   "wall_s": 47.46166801452637
+  },
+  {
+   "runtime_min": 20.59917897322509,
+   "v_end": 2.5,
+   "T_peak_C": 64.72141291137945,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 160,
+    "r_p": 160
+   },
+   "T_C": 0.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 83.38318514823914
+  },
+  {
+   "runtime_min": 31.381389920803326,
+   "v_end": 2.4999999999949045,
+   "T_peak_C": 36.932752939960494,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 160,
+    "r_p": 160
+   },
+   "T_C": 0.0,
+   "load": 1.5,
+   "soh": 1.0,
+   "wall_s": 101.29289722442627
+  },
+  {
+   "runtime_min": 50.08333221850118,
+   "v_end": 2.499999999999999,
+   "T_peak_C": 26.953438651847023,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 160,
+    "r_p": 160
+   },
+   "T_C": 0.0,
+   "load": 1.0,
+   "soh": 1.0,
+   "wall_s": 116.18819737434387
+  },
+  {
+   "runtime_min": 21.112255581884728,
+   "v_end": 2.4999999999999116,
+   "T_peak_C": 70.26797096177631,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 160,
+    "r_p": 160
+   },
+   "T_C": 10.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 87.73721480369568
+  },
+  {
+   "runtime_min": 22.286818875306608,
+   "v_end": 2.5,
+   "T_peak_C": 95.59877263292617,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 160,
+    "r_p": 160
+   },
+   "T_C": 45.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 98.82511281967163
+  },
+  {
+   "runtime_min": 290.9688977113607,
+   "v_end": 2.499999999999429,
+   "T_peak_C": 27.93924870051029,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 160,
+    "r_p": 160
+   },
+   "T_C": 25.0,
+   "load": 0.2,
+   "soh": 1.0,
+   "wall_s": 124.98714423179626
+  },
+  {
+   "runtime_min": 20.602688188303947,
+   "v_end": 2.4999999999999996,
+   "T_peak_C": 64.7088686700331,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 320,
+    "r_p": 320
+   },
+   "T_C": 0.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 264.0230839252472
+  },
+  {
+   "runtime_min": 31.398051042214508,
+   "v_end": 2.499999999999968,
+   "T_peak_C": 36.91768294021125,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 320,
+    "r_p": 320
+   },
+   "T_C": 0.0,
+   "load": 1.5,
+   "soh": 1.0,
+   "wall_s": 302.552042722702
+  },
+  {
+   "runtime_min": 50.097643884839634,
+   "v_end": 2.4999999999993863,
+   "T_peak_C": 26.94957594414774,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 320,
+    "r_p": 320
+   },
+   "T_C": 0.0,
+   "load": 1.0,
+   "soh": 1.0,
+   "wall_s": 375.7946262359619
+  },
+  {
+   "runtime_min": 21.11404266105503,
+   "v_end": 2.5,
+   "T_peak_C": 70.25766376256212,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 320,
+    "r_p": 320
+   },
+   "T_C": 10.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 266.7351174354553
+  },
+  {
+   "runtime_min": 22.28694252708141,
+   "v_end": 2.5,
+   "T_peak_C": 95.59547927854874,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 320,
+    "r_p": 320
+   },
+   "T_C": 45.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 302.63889598846436
+  },
+  {
+   "runtime_min": 290.9672628795086,
+   "v_end": 2.499999999999449,
+   "T_peak_C": 27.93912417283235,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 20,
+    "x_s": 10,
+    "x_p": 20,
+    "r_n": 320,
+    "r_p": 320
+   },
+   "T_C": 25.0,
+   "load": 0.2,
+   "soh": 1.0,
+   "wall_s": 350.7333040237427
+  },
+  {
+   "runtime_min": 20.471200215865117,
+   "v_end": 2.5,
+   "T_peak_C": 65.3408469647951,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 40,
+    "r_p": 40
+   },
+   "T_C": 0.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 38.10690784454346
+  },
+  {
+   "runtime_min": 29.943920597315575,
+   "v_end": 2.4999999999999996,
+   "T_peak_C": 38.95371960019759,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 40,
+    "r_p": 40
+   },
+   "T_C": 0.0,
+   "load": 1.5,
+   "soh": 1.0,
+   "wall_s": 48.75452256202698
+  },
+  {
+   "runtime_min": 49.06284304845837,
+   "v_end": 2.499999999999998,
+   "T_peak_C": 27.45801043168342,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 40,
+    "r_p": 40
+   },
+   "T_C": 0.0,
+   "load": 1.0,
+   "soh": 1.0,
+   "wall_s": 48.43765354156494
+  },
+  {
+   "runtime_min": 21.03059341508139,
+   "v_end": 2.5,
+   "T_peak_C": 70.69341114333713,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 40,
+    "r_p": 40
+   },
+   "T_C": 10.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 40.407262563705444
+  },
+  {
+   "runtime_min": 22.27650652151933,
+   "v_end": 2.5,
+   "T_peak_C": 95.71081253617876,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 40,
+    "r_p": 40
+   },
+   "T_C": 45.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 51.519044399261475
+  },
+  {
+   "runtime_min": 290.98969871009194,
+   "v_end": 2.499999999999545,
+   "T_peak_C": 27.943034436981975,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 40,
+    "r_p": 40
+   },
+   "T_C": 25.0,
+   "load": 0.2,
+   "soh": 1.0,
+   "wall_s": 86.32547640800476
+  },
+  {
+   "runtime_min": 20.576863717335634,
+   "v_end": 2.4999999999998694,
+   "T_peak_C": 64.8268415896153,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 80,
+    "r_p": 80
+   },
+   "T_C": 0.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 120.07923603057861
+  },
+  {
+   "runtime_min": 31.288494248411002,
+   "v_end": 2.4999999999958638,
+   "T_peak_C": 37.25631214072001,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 80,
+    "r_p": 80
+   },
+   "T_C": 0.0,
+   "load": 1.5,
+   "soh": 1.0,
+   "wall_s": 146.57455563545227
+  },
+  {
+   "runtime_min": 49.98570833609411,
+   "v_end": 2.4999999999999973,
+   "T_peak_C": 26.98797096162798,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 80,
+    "r_p": 80
+   },
+   "T_C": 0.0,
+   "load": 1.0,
+   "soh": 1.0,
+   "wall_s": 178.3808455467224
+  },
+  {
+   "runtime_min": 21.09907743162486,
+   "v_end": 2.4999999999999982,
+   "T_peak_C": 70.35498647979239,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 80,
+    "r_p": 80
+   },
+   "T_C": 10.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 128.8530297279358
+  },
+  {
+   "runtime_min": 22.28332861218218,
+   "v_end": 2.4999999999999045,
+   "T_peak_C": 95.64388855291423,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 80,
+    "r_p": 80
+   },
+   "T_C": 45.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 149.77852702140808
+  },
+  {
+   "runtime_min": 290.9703011403608,
+   "v_end": 2.4999999999997313,
+   "T_peak_C": 27.941378615023552,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 80,
+    "r_p": 80
+   },
+   "T_C": 25.0,
+   "load": 0.2,
+   "soh": 1.0,
+   "wall_s": 216.0740532875061
+  },
+  {
+   "runtime_min": 20.597038201730424,
+   "v_end": 2.499999999999921,
+   "T_peak_C": 64.75845367552449,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 160,
+    "r_p": 160
+   },
+   "T_C": 0.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 321.54639410972595
+  },
+  {
+   "runtime_min": 31.383157237816327,
+   "v_end": 2.4999999999766414,
+   "T_peak_C": 36.96749306698348,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 160,
+    "r_p": 160
+   },
+   "T_C": 0.0,
+   "load": 1.5,
+   "soh": 1.0,
+   "wall_s": 380.7194826602936
+  },
+  {
+   "runtime_min": 50.084031412278634,
+   "v_end": 2.4999999999988183,
+   "T_peak_C": 26.976641638232195,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 160,
+    "r_p": 160
+   },
+   "T_C": 0.0,
+   "load": 1.0,
+   "soh": 1.0,
+   "wall_s": 436.3235318660736
+  },
+  {
+   "runtime_min": 21.109833167777435,
+   "v_end": 2.5,
+   "T_peak_C": 70.304756975298,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 160,
+    "r_p": 160
+   },
+   "T_C": 10.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 317.86028003692627
+  },
+  {
+   "runtime_min": 22.28413616599537,
+   "v_end": 2.4999999999998996,
+   "T_peak_C": 95.63025978578474,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 160,
+    "r_p": 160
+   },
+   "T_C": 45.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 365.4535734653473
+  },
+  {
+   "runtime_min": 290.9643492419939,
+   "v_end": 2.4999999999999996,
+   "T_peak_C": 27.94092133303991,
+   "termination": "event: Minimum voltage [V]",
+   "ok": true,
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 160,
+    "r_p": 160
+   },
+   "T_C": 25.0,
+   "load": 0.2,
+   "soh": 1.0,
+   "wall_s": 446.5514750480652
+  },
+  {
+   "ok": false,
+   "termination": "error: input set 0: IDAGetDky: IDA_BAD_K: The k-th derivative is not available (flag: -25)",
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 320,
+    "r_p": 320
+   },
+   "T_C": 0.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 486.2317554950714
+  },
+  {
+   "ok": false,
+   "termination": "error: input set 0: IDAGetDky: IDA_BAD_K: The k-th derivative is not available (flag: -25)",
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 320,
+    "r_p": 320
+   },
+   "T_C": 0.0,
+   "load": 1.5,
+   "soh": 1.0,
+   "wall_s": 493.9826807975769
+  },
+  {
+   "ok": false,
+   "termination": "error: input set 0: IDAGetDky: IDA_BAD_K: The k-th derivative is not available (flag: -25)",
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 320,
+    "r_p": 320
+   },
+   "T_C": 0.0,
+   "load": 1.0,
+   "soh": 1.0,
+   "wall_s": 476.34239530563354
+  },
+  {
+   "ok": false,
+   "termination": "error: input set 0: IDAGetDky: IDA_BAD_K: The k-th derivative is not available (flag: -25)",
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 320,
+    "r_p": 320
+   },
+   "T_C": 10.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 425.3546175956726
+  },
+  {
+   "ok": false,
+   "termination": "error: input set 0: bad allocation",
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 320,
+    "r_p": 320
+   },
+   "T_C": 45.0,
+   "load": 1.5,
+   "soh": 0.7,
+   "wall_s": 374.8082182407379
+  },
+  {
+   "ok": false,
+   "termination": "error: input set 0: IDAGetDky: IDA_BAD_K: The k-th derivative is not available (flag: -25)",
+   "mesh": {
+    "x_n": 40,
+    "x_s": 20,
+    "x_p": 40,
+    "r_n": 320,
+    "r_p": 320
+   },
+   "T_C": 25.0,
+   "load": 0.2,
+   "soh": 1.0,
+   "wall_s": 380.6038136482239
+  }
+ ]
+}

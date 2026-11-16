@@ -1,0 +1,116 @@
+{
+ "cases": {
+  "exact parameters": {
+   "inside": 0.0132497948938293,
+   "outside": 0.0358115748412426,
+   "n_nan": 0,
+   "scale": {
+    "diffusivity": 1.0,
+    "exchange": 1.0,
+    "ohmic": 1.0
+   },
+   "h": 10.0
+  },
+  "diffusivities x0.7": {
+   "inside": 1.7893924823059884,
+   "outside": 2.8258532538208976,
+   "n_nan": 0,
+   "scale": {
+    "diffusivity": 0.7,
+    "exchange": 1.0,
+    "ohmic": 1.0
+   },
+   "h": 10.0
+  },
+  "diffusivities x1.3": {
+   "inside": 0.9843375891390272,
+   "outside": 1.4515995436330018,
+   "n_nan": 0,
+   "scale": {
+    "diffusivity": 1.3,
+    "exchange": 1.0,
+    "ohmic": 1.0
+   },
+   "h": 10.0
+  },
+  "exchange currents x0.7": {
+   "inside": 0.34365430697716853,
+   "outside": 0.34019538426630735,
+   "n_nan": 0,
+   "scale": {
+    "diffusivity": 1.0,
+    "exchange": 0.7,
+    "ohmic": 1.0
+   },
+   "h": 10.0
+  },
+  "exchange currents x1.3": {
+   "inside": 0.18146920267362016,
+   "outside": 0.22627451308923005,
+   "n_nan": 0,
+   "scale": {
+    "diffusivity": 1.0,
+    "exchange": 1.3,
+    "ohmic": 1.0
+   },
+   "h": 10.0
+  },
+  "resistances x0.7": {
+   "inside": 0.07723813099087089,
+   "outside": 0.13574388269695822,
+   "n_nan": 0,
+   "scale": {
+    "diffusivity": 1.0,
+    "exchange": 1.0,
+    "ohmic": 0.7
+   },
+   "h": 10.0
+  },
+  "resistances x1.3": {
+   "inside": 0.10324934410220701,
+   "outside": 0.12299753850876413,
+   "n_nan": 0,
+   "scale": {
+    "diffusivity": 1.0,
+    "exchange": 1.0,
+    "ohmic": 1.3
+   },
+   "h": 10.0
+  },
+  "cooling h x0.5": {
+   "inside": 0.4093354870545062,
+   "outside": 0.9949519102134392,
+   "n_nan": 0,
+   "scale": {
+    "diffusivity": 1.0,
+    "exchange": 1.0,
+    "ohmic": 1.0
+   },
+   "h": 5.0
+  },
+  "cooling h x2": {
+   "inside": 0.4162912711702389,
+   "outside": 1.3440946752727563,
+   "n_nan": 0,
+   "scale": {
+    "diffusivity": 1.0,
+    "exchange": 1.0,
+    "ohmic": 1.0
+   },
+   "h": 20.0
+  },
+  "all worse (D, j0 x0.7, R x1.3)": {
+   "inside": 2.184026389998332,
+   "outside": 3.1992269178348347,
+   "n_nan": 0,
+   "scale": {
+    "diffusivity": 0.7,
+    "exchange": 0.7,
+    "ohmic": 1.3
+   },
+   "h": 10.0
+  }
+ },
+ "n_inside": 256,
+ "n_outside": 121
+}
