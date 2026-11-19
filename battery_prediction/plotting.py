@@ -7,18 +7,15 @@ carries a short descriptive title with (a), (b), ...; what the figure shows is s
 One colour per kind of tool in every figure and in the interactive page; series are named next to their lines
 where there is room.
 """
-import os
-
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 from matplotlib import font_manager  # noqa: E402
-from matplotlib.ticker import FixedLocator, NullFormatter, NullLocator  # noqa: E402
+from matplotlib.ticker import FixedLocator, NullLocator  # noqa: E402
 
 from . import design as ds  # noqa: E402
-from . import results as rs  # noqa: E402
 
 W_CM = 14.0
 FS, FS_LAB = 9.5, 10.5
@@ -110,7 +107,8 @@ def error_vs_distance(ml, path):
 
 def self_heating(th, path):
     """Runtime and end temperature at rated load against the cooling coefficient h, 0 and 25 C, reference and
-    simulation. The isothermal model is the limit h -> infinity and is drawn at the right end of the axis."""
+    SPMe, both with the reference's parameters (a check of the model form, not the tool of the experiment). The
+    isothermal model is the limit h -> infinity and is drawn at the right end of the axis."""
     rows = th["rows"]
     x_inf = 700.0
     ticks = [2, 5, 10, 25, 100, x_inf]
@@ -147,7 +145,7 @@ def self_heating(th, path):
     ax.set_ylabel("Runtime at rated load (min)")
     ax.set_title("(a) Runtime")
     ax.plot([], [], "-", color=COLORS["reference"], label="Reference (DFN)")
-    ax.plot([], [], "--", color=COLORS["simulation"], label="Simulation (SPMe)")
+    ax.plot([], [], "--", color=COLORS["simulation"], label="SPMe")
     ax.legend(loc="lower left")
     ax = axes[1]
     for T_C, mk in ((0.0, "o"), (25.0, "s")):
@@ -159,29 +157,6 @@ def self_heating(th, path):
     axis(ax)
     ax.set_ylabel("Cell temperature at the end (°C)")
     ax.set_title("(b) End temperature (reference)")
-    save(fig, path)
-
-
-def model_forms(results_dir, path):
-    """Error of three forms of the hand-written model against the reference, along the temperature sweep."""
-    pts = {ds.key(d): d for d in rs.reference_points(os.path.join(results_dir, "reference.json"))}
-    own = {ds.key(d): d for d in rs.load_json(os.path.join(results_dir, "model_points.json"))}
-    fig, axes = newfig(0.42, 2, sharey=True)
-    forms = [("SPM_isothermal", "Single particle, isothermal", COLORS["simulation"], ":"),
-             ("SPMe_isothermal", "+ electrolyte, isothermal", COLORS["simulation"], "--"),
-             ("SPMe_lumped", "+ electrolyte + self-heating", COLORS["simulation"], "-")]
-    for ax, tag, title in zip(axes, ("sweep_T_0.6", "sweep_T_1.0"),
-                              ("(a) 60 % of rated power, new cell", "(b) Rated power, new cell"), strict=True):
-        ks = sorted([k for k in pts if k[0] == tag], key=lambda k: k[1])
-        T = [k[1] for k in ks]
-        for col, label, color, ls in forms:
-            e = [100 * (own[k][col] / pts[k]["runtime_min"] - 1) for k in ks]
-            ax.plot(T, e, ls, color=color, marker="o", ms=2.5, label=label)
-        ax.axhline(0, color=GRAY, lw=0.8)
-        ax.set_xlabel("Room temperature (°C)")
-        ax.set_title(title)
-    axes[0].set_ylabel("Runtime error (%)")
-    axes[1].legend(loc="lower right")
     save(fig, path)
 
 
@@ -208,55 +183,18 @@ def sweeps(ml, path):
     save(fig, path)
 
 
-def parity(ml, path):
-    """Predicted against reference runtime, inside and outside the range (seed 0), square axes."""
-    s0 = ml["seed0"]
-    y, tag = np.array(s0["y"]), np.array(s0["tag"])
-    test = np.array(s0["test_idx"])
-    wide = np.where(tag == "wide")[0]
-    show = [("Simulation (own model)", "(a) Simulation"), ("Gaussian process", "(b) Gaussian process"),
-            ("Physics features + linear fit", "(c) Physics features")]
-    fig, axes = newfig(0.38, 3)
-    hi = 1.1 * y.max()
-    colors = {t[0]: t[2] for t in TOOLS}
-    for ax, (key, title) in zip(axes, show, strict=True):
-        p = np.array(s0["preds"][key])
-        ax.plot([1, hi], [1, hi], color=GRAY, lw=0.8)
-        ax.scatter(y[wide], p[wide], s=10, facecolors="none", edgecolors=colors[key], lw=0.7, label="Outside")
-        ax.scatter(y[test], p[test], s=10, color=colors[key], label="Inside")
-        ax.set_xscale("log")
-        ax.set_yscale("log")
-        ax.set_xlim(20, hi)
-        ax.set_ylim(20, hi)
-        ax.set_aspect("equal")
-        for a in (ax.xaxis, ax.yaxis):
-            a.set_major_locator(FixedLocator([20, 50, 100, 200]))
-            a.set_major_formatter("{x:g}")
-            a.set_minor_formatter(NullFormatter())
-        ax.set_title(title)
-        ax.set_xlabel("Reference (min)")
-    axes[0].set_ylabel("Predicted runtime (min)")
-    axes[0].legend(loc="upper left", handletextpad=0.2, borderpad=0.3)
-    save(fig, path)
-
-
 def coverage(ml, path):
     """Coverage of the 90 % conformal intervals inside and outside the training range."""
     acc = ml["accuracy"]
-    keys = [k for k, *_ in TOOLS if "cover_in" in acc[k]] + ["Linear regression", "Polynomial (degree 3)",
-                                                             "Random forest"]
-    keys = list(dict.fromkeys(keys))
+    keys = sorted((k for k, *_ in TOOLS if "cover_in" in acc[k]), key=lambda k: acc[k]["cover_wide"][0])
     names = {t[0]: t[1] for t in TOOLS}
-    names.update({"Linear regression": "Linear regression", "Polynomial (degree 3)": "Polynomial",
-                  "Random forest": "Random forest"})
     colors = {t[0]: t[2] for t in TOOLS}
-    keys.sort(key=lambda k: acc[k]["cover_wide"][0])
-    fig, ax = newfig(0.50)
+    fig, ax = newfig(0.38)
     yy = np.arange(len(keys))
     inside = [100 * acc[k]["cover_in"][0] for k in keys]
     outside = [100 * acc[k]["cover_wide"][0] for k in keys]
     ax.barh(yy + 0.19, inside, 0.36, color=LIGHT)
-    ax.barh(yy - 0.19, outside, 0.36, color=[colors.get(k, COLORS["ml"]) for k in keys])
+    ax.barh(yy - 0.19, outside, 0.36, color=[colors[k] for k in keys])
     top = len(keys) - 1        # name the two bars of the top row instead of a legend
     ax.annotate("inside the training range", (0, top + 0.19), xytext=(4, 0), textcoords="offset points",
                 ha="left", va="center", fontsize=FS - 1)
@@ -270,80 +208,3 @@ def coverage(ml, path):
     ax.set_xlim(0, 100)
     save(fig, path)
 
-
-def runtime_map(grid, path):
-    """Simulated runtime over temperature and load (new cell), training range outlined."""
-    T, L = np.array(grid["T_C"]), np.array(grid["load"])
-    G = np.array(grid["runtime_min"])[:, :, 0]
-    fig, ax = newfig(0.62)
-    levels = [10, 15, 20, 30, 40, 50, 60, 80, 100, 150, 200, 300]
-    cs = ax.contourf(T, 100 * L, G.T, levels=levels, cmap="viridis", extend="both")
-    cl = ax.contour(T, 100 * L, G.T, levels=levels, colors="white", linewidths=0.6)
-    ax.clabel(cl, fmt="%g", fontsize=FS - 1.5)
-    lo, hi = ds.NORMAL["T"], ds.NORMAL["load"]
-    ax.add_patch(plt.Rectangle((lo[0], 100 * hi[0]), lo[1] - lo[0], 100 * (hi[1] - hi[0]), fill=False, ec="white",
-                               lw=1.4, ls="--"))
-    ax.annotate("training range", (lo[1], 100 * hi[1]), xytext=(3, 3), textcoords="offset points", color="white",
-                fontsize=FS - 0.5)
-    fig.colorbar(cs, ax=ax, label="Runtime (min)")
-    ax.set_xlabel("Room temperature (°C)")
-    ax.set_ylabel("Load (% of rated power)")
-    save(fig, path)
-
-
-def convergence(conv, path):
-    """Radial convergence of the single-particle model, ours against PyBaMM's (0 C, 2C)."""
-    sp = conv["spm"]
-    fig, ax = newfig(0.58)
-    ref_t = sp["pybamm"][-1]["runtime_s"]
-    for rows, label, color, mk in ((sp["own"], "This code (Kirchhoff faces)", COLORS["simulation"], "o"),
-                                   (sp["pybamm"], "PyBaMM SPM", COLORS["reference"], "s")):
-        n = [r["n_r"] for r in rows]
-        e = [max(abs(r["runtime_s"] / ref_t - 1) * 100, 1e-3) for r in rows]
-        ax.plot(n, e, "-", marker=mk, ms=4, color=color, label=label)
-    ax.axvline(20, color=LIGHT, lw=0.8, zorder=0)
-    ax.annotate("PyBaMM default", (20, 0.05), xycoords=("data", "axes fraction"), xytext=(3, 0),
-                textcoords="offset points", rotation=90, fontsize=FS - 1, color=GRAY, va="bottom")
-    ax.set_xscale("log")
-    ax.set_yscale("log")
-    ax.set_xlabel("Radial points per particle")
-    ax.set_ylabel("Runtime difference from the\nfinest PyBaMM run (%)")
-    ax.legend()
-    save(fig, path)
-
-
-def runaway(results_dir, path):
-    """Oven tests of the three chemistries and propagation along a row."""
-    from . import thermal_runaway as tr
-    run = rs.load_json(os.path.join(results_dir, "verify_runaway.json"))
-    sc = rs.load_json(os.path.join(results_dir, "runaway_scenarios.json"))
-    fig, axes = newfig(0.46, 2)
-    ax = axes[0]
-    shades = {"LCO": "0.1", "NMC111": "0.42", "LFP": "0.65"}
-    for ch in (tr.LCO, tr.NMC, tr.LFP):
-        crit = run["oven"][f"{ch.name}_critical_C"]
-        for dT, ls in ((+2.0, "-"), (-2.0, ":")):
-            t, y, _ = tr.oven_test(ch, crit + dT + 273.15, t_end=10800.0)
-            T = y[:, 0] - 273.15
-            ax.plot(t / 60, T, ls, color=shades[ch.name], lw=1.2)
-            if dT > 0:      # name the chemistry above its runaway peak
-                k = int(np.argmax(T))
-                right = ch.name == "LCO"      # its neighbours leave no room above the peak
-                ax.annotate(f"{ch.name}\nonset {crit:.0f} °C", (t[k] / 60, T[k]), xytext=(5, -6) if right else (0, 4),
-                            textcoords="offset points", fontsize=FS - 1, color=shades[ch.name],
-                            va="center" if right else "bottom", ha="left" if right else "center", linespacing=1.0)
-    ax.set_xlabel("Time in the oven (min)")
-    ax.set_ylabel("Cell temperature (°C)")
-    ax.set_ylim(0, 650)
-    ax.set_title("(a) Oven tests, onset ± 2 K")
-    ax = axes[1]
-    for name, mk, ms, mfc in (("NMC111", "s", 3.5, None), ("LFP", "^", 3.5, None), ("LCO", "o", 6.0, "none")):
-        rr = [r for r in sc["propagation"] if r["chem"] == name]
-        ax.plot([r["G"] for r in rr], [r["n_runaway"] for r in rr], "-", marker=mk, ms=ms, mfc=mfc,
-                color=shades[name], label=name)
-    ax.set_xscale("log")
-    ax.set_xlabel("Conductance to a neighbour (W K$^{-1}$)")
-    ax.set_ylabel("Cells in runaway (of 6)")
-    ax.set_title("(b) Row of six, first at 250 °C")
-    ax.legend(loc="lower right")
-    save(fig, path)

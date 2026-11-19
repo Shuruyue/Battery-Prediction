@@ -10,9 +10,9 @@ Writes results/convergence.json. About twenty minutes on one core.
 import _path  # noqa: F401
 import pybamm
 
-from ups_battery_prediction import design as ds
-from ups_battery_prediction import discharge as dc
-from ups_battery_prediction import results as rs
+from battery_prediction import design as ds
+from battery_prediction import discharge as dc
+from battery_prediction import results as rs
 
 pybamm.set_logging_level("ERROR")
 T_SPM, I_SPM = 273.15, 10.0

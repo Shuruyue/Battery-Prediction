@@ -1,13 +1,13 @@
-"""The simulation tool (SPMe + lumped thermal) on a regular grid: 0-45 C, 20-150 % of rated power, state of
-health 1.0-0.7. Used by the runtime map and by the interactive page. Writes results/model_grid.json."""
+"""The simulation tool (SPMe + lumped thermal, parameters design.SIM_SCALE) on a regular grid: 0-45 C, 20-150 %
+of rated power, state of health 1.0-0.7, for the interactive page. Writes results/model_grid.json."""
 import time
 
 import _path  # noqa: F401
 import numpy as np
 
-from ups_battery_prediction import design as ds
-from ups_battery_prediction import discharge as dc
-from ups_battery_prediction import results as rs
+from battery_prediction import design as ds
+from battery_prediction import discharge as dc
+from battery_prediction import results as rs
 
 T_GRID = np.arange(0.0, 45.01, 2.5)
 LOAD_GRID = np.round(np.arange(0.2, 1.501, 0.05), 2)
@@ -17,7 +17,8 @@ SOH_GRID = np.array([1.0, 0.9, 0.8, 0.7])
 def main():
     TT, LL, HH = np.meshgrid(T_GRID, LOAD_GRID, SOH_GRID, indexing="ij")
     t0 = time.time()
-    r = dc.simulate(TT.ravel() + 273.15, HH.ravel(), power=ds.P_RATED * LL.ravel(), model="SPMe", thermal="lumped")
+    r = dc.simulate(TT.ravel() + 273.15, HH.ravel(), power=ds.P_RATED * LL.ravel(), model="SPMe", thermal="lumped",
+                    scale=dc.Scale(**ds.SIM_SCALE))
     rt = (r["runtime_s"] / 60).reshape(TT.shape)
     tp = (r["T_max_K"] - 273.15).reshape(TT.shape)
     rs.save_json(dict(T_C=T_GRID.tolist(), load=LOAD_GRID.tolist(), soh=SOH_GRID.tolist(), runtime_min=rt.tolist(),

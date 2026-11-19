@@ -5,10 +5,10 @@ Writes results/thermal_effect.json. About fifteen minutes on one core.
 """
 import _path  # noqa: F401
 
-from ups_battery_prediction import design as ds
-from ups_battery_prediction import discharge as dc
-from ups_battery_prediction import reference as ref
-from ups_battery_prediction import results as rs
+from battery_prediction import design as ds
+from battery_prediction import discharge as dc
+from battery_prediction import reference as ref
+from battery_prediction import results as rs
 
 H_VALUES = (2.0, 5.0, 10.0, 25.0, 100.0)
 

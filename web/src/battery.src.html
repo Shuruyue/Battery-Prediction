@@ -2,8 +2,8 @@
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>UPS Battery Runtime and Runaway</title>
-<meta name="description" content="How long a UPS battery lasts and whether it can burn: a formula, a physical simulation and machine-learning models compared against one reference, and a thermal-runaway model solved in the page.">
+<title>Battery Runtime</title>
+<meta name="description" content="How long a battery lasts at constant power: a formula, a physical simulation and machine-learning models compared against one reference, inside and outside the conditions they were built for.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&display=swap">
@@ -14,7 +14,6 @@
   --grid: #e5e4de; --axis: #c3c2b7; --line: rgba(11,11,11,.11);
   --accent: #2a78d6; --accent-ink: #1c5cab; --accent-soft: #e3eefb;
   --ref: #141412; --sim: #2a78d6; --formula: #eb6834; --ml: #d03b3b; --phys: #1baf7a; --hyb: #6250d6;
-  --r1: #fbd3c9; --r2: #f4a28c; --r3: #e8704f; --r4: #d03b3b; --r5: #a3252a; --r6: #6e1418;
   --band: rgba(42,120,214,.10);
   --good: #006300; --crit: #d03b3b; --warn-mark: #fab219;
   --font-ui: "IBM Plex Sans", "Noto Sans TC", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -27,7 +26,6 @@
     --grid: #2c2c2a; --axis: #45443f; --line: rgba(255,255,255,.10);
     --accent: #3987e5; --accent-ink: #86b6ef; --accent-soft: #16273d;
     --ref: #f0efec; --sim: #3987e5; --formula: #d95926; --ml: #e66767; --phys: #199e70; --hyb: #8f7fe8;
-    --r1: #4a1a17; --r2: #74251f; --r3: #a3352b; --r4: #d0503d; --r5: #e8826e; --r6: #f6b8a8;
     --band: rgba(57,135,229,.16);
     --good: #0ca30c; --crit: #e66767;
     color-scheme: dark;
@@ -38,7 +36,6 @@
   --grid: #2c2c2a; --axis: #45443f; --line: rgba(255,255,255,.10);
   --accent: #3987e5; --accent-ink: #86b6ef; --accent-soft: #16273d;
   --ref: #f0efec; --sim: #3987e5; --formula: #d95926; --ml: #e66767; --phys: #199e70; --hyb: #8f7fe8;
-  --r1: #4a1a17; --r2: #74251f; --r3: #a3352b; --r4: #d0503d; --r5: #e8826e; --r6: #f6b8a8;
   --band: rgba(57,135,229,.16);
   --good: #0ca30c; --crit: #e66767;
   color-scheme: dark;
@@ -126,12 +123,6 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 .answer { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--r); padding: 10px 14px; font-size: .9rem; margin-top: 14px; }
 .answer p { margin: 0; max-width: 80ch; }
 .answer p + p { margin-top: 6px; }
-.cells { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
-.cellbox { border-radius: 8px; border: 1px solid var(--line); padding: 10px 2px; text-align: center; font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: .95rem; }
-.cellbox small { display: block; font-family: var(--font-ui); font-size: .72rem; opacity: .85; }
-.timebar { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
-.timebar input { flex: 1; accent-color: var(--accent); }
-.play { font: inherit; font-size: .84rem; padding: 4px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); cursor: pointer; }
 .about { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 18px; display: grid; gap: 10px; }
 .about h2 { font-size: 1rem; font-weight: 600; }
 .about p, .about li { max-width: 86ch; margin: 0; color: var(--ink-2); }
@@ -142,19 +133,18 @@ footer { font-size: .78rem; color: var(--muted); margin-top: 18px; max-width: 10
 </style>
 <div class="app">
   <header class="head">
-    <h1><span class="en">UPS backup battery · LG M50 cell (NMC811 / graphite)</span>How long does it last, and can it burn?</h1>
+    <h1><span class="en">LG M50 cell (NMC811 / graphite) · constant-power discharge</span>How long does the battery last?</h1>
     <p class="sys">The same question answered by a <b>formula</b>, a <b>physical simulation</b> and <b>machine learning</b>, each scored against one reference model, inside and outside the conditions the tools were built for.</p>
   </header>
   <div class="tabs" role="tablist" aria-label="Sections">
     <button class="tab" role="tab" id="t-run" aria-selected="true" aria-controls="p-run">Runtime</button>
-    <button class="tab" role="tab" id="t-tr" aria-selected="false" aria-controls="p-tr">Thermal runaway</button>
     <button class="tab" role="tab" id="t-about" aria-selected="false" aria-controls="p-about">About the models</button>
   </div>
 
   <section id="p-run" role="tabpanel" aria-labelledby="t-run">
     <div class="layout">
-      <aside class="rail" aria-label="Outage conditions">
-        <div class="grp"><h2>OUTAGE CONDITIONS</h2>
+      <aside class="rail" aria-label="Operating conditions">
+        <div class="grp"><h2>OPERATING CONDITIONS</h2>
           <div class="ctl"><div class="row"><label for="s-t">Room temperature</label><output id="o-t" for="s-t"></output></div>
             <input type="range" id="s-t" min="0" max="45" step="0.5" value="25"></div>
           <div class="ctl"><div class="row"><label for="s-l">Load, share of rated power</label><output id="o-l" for="s-l"></output></div>
@@ -176,7 +166,7 @@ footer { font-size: .78rem; color: var(--muted); margin-top: 18px; max-width: 10
       <div>
         <div class="readouts" aria-live="polite">
           <div class="ro"><div class="k"><i style="background:var(--ref)"></i>Reference (DFN, PyBaMM)</div><div class="v" id="r-ref"></div><div class="s" id="r-ref-s"></div></div>
-          <div class="ro"><div class="k"><i style="background:var(--sim)"></i>Simulation</div><div class="v" id="r-sim"></div><div class="s">no fitting to data</div></div>
+          <div class="ro"><div class="k"><i style="background:var(--sim)"></i>Simulation</div><div class="v" id="r-sim"></div><div class="s">parameters 30 % off, no fitting</div></div>
           <div class="ro"><div class="k"><i style="background:var(--formula)"></i>Formula (Peukert)</div><div class="v" id="r-for"></div><div class="s">from two datasheet points</div></div>
           <div class="ro"><div class="k">Cell temperature at the end</div><div class="v" id="r-temp"></div><div class="s">simulation, self-heating included</div></div>
           <div class="ro"><div class="k">Learned models</div><div class="v" id="r-range"></div><div class="s" id="r-range-s"></div></div>
@@ -197,81 +187,38 @@ footer { font-size: .78rem; color: var(--muted); margin-top: 18px; max-width: 10
     </div>
   </section>
 
-  <section id="p-tr" role="tabpanel" aria-labelledby="t-tr" hidden>
-    <div class="layout">
-      <aside class="rail" aria-label="Thermal-runaway settings">
-        <div class="grp"><h2>ONE CELL IN AN OVEN</h2>
-          <div class="seg" id="chem1" role="group" aria-label="Cathode"><button type="button" data-v="LCO" aria-pressed="true">LCO</button><button type="button" data-v="NMC111" aria-pressed="false">NMC111</button><button type="button" data-v="LFP" aria-pressed="false">LFP</button></div>
-          <div class="ctl"><div class="row"><label for="toven">Oven temperature</label><output id="toven-o" for="toven"></output></div><input type="range" id="toven" min="120" max="230" step="1" value="155"></div>
-          <div class="ctl"><div class="row"><label for="hconv">Cooling, h</label><output id="hconv-o" for="hconv"></output></div><input type="range" id="hconv" min="5" max="40" step="0.01" value="7.17"></div>
-          <div class="seg" id="solver" role="group" aria-label="Time integration"><button type="button" data-v="implicit" aria-pressed="true">Implicit, adaptive</button><button type="button" data-v="explicit" aria-pressed="false">Explicit, 1 s</button></div>
-        </div>
-        <div class="grp"><h2>SIX CELLS IN A ROW</h2>
-          <div class="seg" id="chem2" role="group" aria-label="Cathode of the row"><button type="button" data-v="LCO" aria-pressed="false">LCO</button><button type="button" data-v="NMC111" aria-pressed="true">NMC111</button><button type="button" data-v="LFP" aria-pressed="false">LFP</button></div>
-          <div class="ctl"><div class="row"><label for="gcond">Thermal contact between cells</label><output id="gcond-o" for="gcond"></output></div><input type="range" id="gcond" min="-1.7" max="0.5" step="0.05" value="-0.3"></div>
-        </div>
-        <div class="note">18650 LiCoO<sub>2</sub> cell of Kim et al.; the NMC111 and LFP variants change only the cathode reaction. No NMC811 kinetics of this form were found, so the LG M50 of the runtime tab is not represented.</div>
-      </aside>
-      <div>
-        <div class="readouts" aria-live="polite">
-          <div class="ro"><div class="k">Oven test</div><div class="v" id="v-oven"></div><div class="s" id="v-oven-s"></div></div>
-          <div class="ro"><div class="k">Peak temperature</div><div class="v" id="v-peak"></div><div class="s">lumped cell, no venting: runs high</div></div>
-          <div class="ro"><div class="k">Lowest oven temperature for runaway</div><div class="v" id="v-crit"></div><div class="s">bisection in the page</div></div>
-          <div class="ro"><div class="k">Time steps</div><div class="v" id="v-steps"></div><div class="s" id="v-steps-s">adaptive backward Euler</div></div>
-          <div class="ro"><div class="k">Row of six cells</div><div class="v" id="v-row"></div><div class="s" id="v-row-s"></div></div>
-        </div>
-        <div class="grid2">
-          <div class="card"><h3>Cell temperature in the oven</h3><div class="chart" id="p-temp"></div><div class="legend" id="lg-temp"></div></div>
-          <div class="card"><h3>Heat released against heat removed</h3><div class="chart" id="p-sem"></div>
-            <div class="legend"><span><svg width="16" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="var(--crit)" stroke-width="2.4"/></svg>released by the four reactions</span><span><svg width="16" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="var(--sim)" stroke-width="2.4"/></svg>removed by air and radiation</span></div>
-            <div class="note">Runaway is the moment the reactions release heat faster than the surroundings take it away. The second curve starts once the cell is hotter than the oven.</div></div>
-          <div class="card"><h3>Six cells, the first one at 250 °C: <span id="tnow" class="num"></span></h3>
-            <div class="cells" id="cells"></div>
-            <div class="timebar"><button type="button" class="play" id="play">Play</button><input type="range" id="tscrub" min="0" max="1000" step="1" value="0" aria-label="Time"></div></div>
-          <div class="card"><h3>Temperature of each cell</h3><div class="chart" id="p-row"></div><div class="legend" id="lg-row"></div></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <section id="p-about" role="tabpanel" aria-labelledby="t-about" hidden>
     <div class="about">
       <h2>What each tool is</h2>
       <ul>
         <li><b>Reference</b>: the Doyle–Fuller–Newman model with a lumped thermal model, solved with PyBaMM using the LG M50 parameters of O’Regan et al. (2022), cooled by 10 W/(m² K). It plays the real battery.</li>
-        <li><b>Simulation</b>: a single-particle model with electrolyte (SPMe) and the same lumped thermal model, written from scratch in NumPy; it shares the reference’s parameters and is not fitted to any data.</li>
+        <li><b>Simulation</b>: a single-particle model with electrolyte (SPMe) and the same lumped thermal model, written from scratch in NumPy. The parameters of a real cell are never known exactly, so it runs with a pessimistic set (solid diffusivities and exchange currents 30 % low, resistances 30 % high), and it is not fitted to any data.</li>
         <li><b>Formula</b>: Peukert’s law through two rated points (25 °C, new cell, 50 % and 100 % load).</li>
         <li><b>Learned models</b>: gradient boosting, a neural network and a Gaussian process (scikit-learn), trained on 150 noisy discharges inside the training range; <b>physics features</b> is a linear fit of log t on log load, log health and 1/T; <b>simulation + data</b> learns a correction to the simulation.</li>
       </ul>
       <h2>Why the cold room is not as bad as an isothermal model says</h2>
       <p id="about-heat"></p>
       <h2>Limits</h2>
-      <p>The reference is itself a model, not a measurement, and it shares its parameters with the simulation, which favours the simulation. The cooling coefficient of a cell inside a UPS cabinet is assumed, not measured. Ageing is loss of lithium plus an SEI film resistance only. The thermal-runaway model is a lumped 18650 cell without venting.</p>
-      <p>Source code, data and checks: <a href="https://github.com/Shuruyue/UPS-Battery-Prediction">github.com/Shuruyue/UPS-Battery-Prediction</a>.</p>
+      <p>The reference is itself a model, not a measurement, and the simulation shares its equations for the particles and the heat. The cooling coefficient of a cell inside a battery cabinet is assumed, not measured. Ageing is loss of lithium plus an SEI film resistance only.</p>
+      <p>Source code, data and checks: <a href="https://github.com/Shuruyue/Battery-Prediction">github.com/Shuruyue/Battery-Prediction</a>.</p>
     </div>
   </section>
-  <footer>Cell parameters: O’Regan et al., Electrochim. Acta 425 (2022) 140700; Chen et al., J. Electrochem. Soc. 167 (2020) 080534. Reference solver: PyBaMM (Sulzer et al., J. Open Res. Softw. 9 (2021) 14). Thermal runaway: Hatchard et al., J. Electrochem. Soc. 148 (2001) A755; Kim, Pesaran and Spotnitz, J. Power Sources 170 (2007) 476; cathodes after Peng and Jiang, Int. J. Heat Mass Transfer 103 (2016) 1008. Every number in this page is computed by the scripts of the repository.</footer>
+  <footer>Cell parameters: O’Regan et al., Electrochim. Acta 425 (2022) 140700; Chen et al., J. Electrochem. Soc. 167 (2020) 080534. Reference solver: PyBaMM (Sulzer et al., J. Open Res. Softw. 9 (2021) 14). Every number in this page is computed by the scripts of the repository.</footer>
 </div>
 
 <script>/*__CHART__*/</script>
-<script>
-// ---- physics: begin
-/*__MODEL__*/
-// ---- physics: end
-</script>
 <script>/*__DATA__*/</script>
 <script>
 (function () {
   "use strict";
-  var D = window.RUNTIME_DATA, $ = function (id) { return document.getElementById(id); }, K = 273.15;
+  var D = window.RUNTIME_DATA, $ = function (id) { return document.getElementById(id); };
   var css = function (v) { return "var(" + v + ")"; };
 
   // ---------------- tabs
-  var TABS = [["t-run", "p-run"], ["t-tr", "p-tr"], ["t-about", "p-about"]], trReady = false;
-  var HASH = { "#runtime": "t-run", "#thermal-runaway": "t-tr", "#about": "t-about" };
+  var TABS = [["t-run", "p-run"], ["t-about", "p-about"]];
+  var HASH = { "#runtime": "t-run", "#about": "t-about" };
   function showTab(id) {
     TABS.forEach(function (u) { $(u[0]).setAttribute("aria-selected", u[0] === id ? "true" : "false"); $(u[1]).hidden = u[0] !== id; });
-    if (id === "t-tr" && !trReady) { trReady = true; runOven(); runRow(); }
     if (id === "t-run") draw();
   }
   TABS.forEach(function (t) { $(t[0]).addEventListener("click", function () { showTab(t[0]); }); });
@@ -383,92 +330,9 @@ footer { font-size: .78rem; color: var(--muted); margin-top: 18px; max-width: 10
     $("s-t").value = p[0]; $("s-l").value = p[1]; $("s-h").value = p[2]; setAxis(p[3]); draw();
   });
   $("about-heat").textContent = D.about_heat;
-  setTimeout(function () { if (HASH[location.hash]) showTab(HASH[location.hash]); }, 0);   // link to a tab, e.g. #thermal-runaway
+  setTimeout(function () { if (HASH[location.hash]) showTab(HASH[location.hash]); }, 0);   // link to a tab, e.g. #about
 
-  // ---------------- thermal runaway
-  var st = { chem1: "LCO", solver: "implicit", chem2: "NMC111" }, critCache = {};
-  function minutes(s) { return (s / 60).toFixed(1) + " min"; }
-  function runOven() {
-    var c = TR.CHEM[st.chem1], Tov = +$("toven").value + K, h = +$("hconv").value, tEnd = 7200;
-    $("toven-o").textContent = $("toven").value + " °C"; $("hconv-o").textContent = h.toFixed(1) + " W/(m² K)";
-    var imp = TR.ovenTest(c, Tov, { h: h, tEnd: tEnd, rtol: 1e-4 });
-    var series = [{ name: "implicit", color: css("--sim"), x: imp.t.map(function (v) { return v / 60; }), y: imp.y.map(function (v) { return v[0] - K; }) }];
-    var lg = '<span><svg width="16" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="var(--sim)" stroke-width="2.4"/></svg>implicit, adaptive step</span>';
-    $("v-steps").textContent = imp.steps; $("v-steps-s").textContent = "adaptive backward Euler";
-    if (st.solver === "explicit") {
-      var ex = TR.ovenTest(c, Tov, { h: h, tEnd: tEnd, explicit: true, dt: 1 });
-      series.push({ name: "explicit", color: css("--formula"), dash: "7 5", x: ex.t.map(function (v) { return v / 60; }), y: ex.y.map(function (v) { return v[0] - K; }) });
-      lg += '<span><svg width="16" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="var(--formula)" stroke-width="2.4" stroke-dasharray="4 3"/></svg>explicit Euler, 1 s step' + (ex.blewAt ? ": overflows at " + minutes(ex.blewAt) : "") + "</span>";
-      $("v-steps").textContent = imp.steps + " / " + (ex.t.length - 1); $("v-steps-s").textContent = "implicit / explicit";
-    }
-    $("lg-temp").innerHTML = lg;
-    var top = Math.max(300, Math.ceil((imp.peak - K + 40) / 100) * 100);
-    Chart.lineChart($("p-temp"), { series: series, xDomain: [0, tEnd / 60], yDomain: [0, top], xLabel: "time (min)", yLabel: "cell temperature (°C)",
-      hLines: [{ y: Tov - K, label: "oven" }], fmtTip: function (v) { return v.toFixed(0) + " °C"; }, fmtTipX: function (v) { return v.toFixed(1) + " min"; }, height: 300, title: "Cell temperature against time" });
-    $("v-oven").innerHTML = '<span class="pill ' + (imp.runaway ? "bad" : "good") + '">' + (imp.runaway ? "runaway" : "no runaway") + "</span>";
-    $("v-oven-s").textContent = imp.runaway ? "after " + minutes(imp.tRunaway) + " in the oven" : "settles near the oven temperature";
-    $("v-peak").innerHTML = (imp.peak - K).toFixed(0) + "<small> °C</small>";
-    var gen = [], loss = [];
-    imp.y.forEach(function (yy) { var pw = TR.powers(c, yy, Tov, h); gen.push(pw[0]); loss.push(pw[1] > 0 ? pw[1] : NaN); });
-    Chart.lineChart($("p-sem"), { series: [{ name: "released", color: css("--crit"), x: series[0].x, y: gen }, { name: "removed", color: css("--sim"), x: series[0].x, y: loss }],
-      xDomain: [0, tEnd / 60], yDomain: [0.01, 1e5], yLog: true, xLabel: "time (min)", yLabel: "power (W)",
-      fmtTip: function (v) { return (v >= 10 ? v.toFixed(0) : v.toPrecision(2)) + " W"; }, fmtTipX: function (v) { return v.toFixed(1) + " min"; }, height: 300, title: "Heat released and removed against time" });
-    var key = st.chem1 + "|" + h;
-    $("v-crit").innerHTML = critCache[key] || "…";
-    clearTimeout(runOven.t);
-    if (!critCache[key]) runOven.t = setTimeout(function () {
-      critCache[key] = (TR.criticalOven(c, { h: h, rtol: 2e-4 }) - K).toFixed(0) + "<small> °C</small>";
-      if (st.chem1 + "|" + (+$("hconv").value) === key) $("v-crit").innerHTML = critCache[key];
-    }, 250);
-  }
-  var row = null, playing = null, ROWCOL = ["--r6", "--r5", "--r4", "--r3", "--r2", "--r1"];
-  function heat(Tc) {
-    var f = Math.max(0, Math.min(1, (Tc - 25) / 675)), a = [240, 239, 236], b = [176, 32, 28];
-    var rgb = a.map(function (v, i) { return Math.round(v + (b[i] - v) * Math.pow(f, 0.7)); });
-    return { bg: "rgb(" + rgb.join(",") + ")", fg: f > 0.38 ? "#ffffff" : "#1b1f24" };
-  }
-  function runRow() {
-    var c = TR.CHEM[st.chem2], G = Math.pow(10, +$("gcond").value);
-    $("gcond-o").textContent = (G < 1 ? G.toFixed(2) : G.toFixed(1)) + " W/K";
-    row = TR.propagation(c, { G: G, tEnd: 1500 });
-    var series = [], lg = "", i;
-    for (i = 0; i < 6; i++) {
-      series.push({ name: "cell " + (i + 1), color: css(ROWCOL[i]), x: row.t.map(function (v) { return v / 60; }), y: row.y.map(function (v) { return v[i * TR.NS] - K; }) });
-      lg += '<span><svg width="16" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="var(' + ROWCOL[i] + ')" stroke-width="2.4"/></svg>cell ' + (i + 1) + "</span>";
-    }
-    $("lg-row").innerHTML = lg;
-    Chart.lineChart($("p-row"), { series: series, xDomain: [0, 25], yDomain: [0, 900], xLabel: "time (min)", yLabel: "temperature (°C)",
-      fmtTip: function (v) { return v.toFixed(0) + " °C"; }, fmtTipX: function (v) { return v.toFixed(1) + " min"; }, height: 300, title: "Temperature of six cells against time" });
-    $("v-row").innerHTML = row.nRun + "<small> of 6 in runaway</small>";
-    $("v-row-s").textContent = row.nRun === 6 ? "the last cell goes after " + minutes(Math.max.apply(null, row.tRun)) : row.nRun > 1 ? "the fire spreads part of the way" : "the fire stays in the first cell";
-    drawCells();
-  }
-  function drawCells() {
-    if (!row) return;
-    var t = +$("tscrub").value / 1000 * 1500, lo = 0, hi = row.t.length - 1;
-    while (hi - lo > 1) { var m = (lo + hi) >> 1; if (row.t[m] <= t) lo = m; else hi = m; }
-    var f = row.t[hi] > row.t[lo] ? (t - row.t[lo]) / (row.t[hi] - row.t[lo]) : 0, html = "";
-    for (var i = 0; i < 6; i++) {
-      var Tc = row.y[lo][i * TR.NS] + f * (row.y[hi][i * TR.NS] - row.y[lo][i * TR.NS]) - K, col = heat(Tc);
-      html += '<div class="cellbox" style="background:' + col.bg + ";color:" + col.fg + '"><small>cell ' + (i + 1) + "</small>" + Tc.toFixed(0) + " °C</div>";
-    }
-    $("cells").innerHTML = html; $("tnow").textContent = minutes(t);
-  }
-  $("play").addEventListener("click", function () {
-    if (playing) { clearInterval(playing); playing = null; $("play").textContent = "Play"; return; }
-    if (+$("tscrub").value >= 1000) $("tscrub").value = 0;
-    $("play").textContent = "Pause";
-    playing = setInterval(function () {
-      var v = Math.min(1000, +$("tscrub").value + 4); $("tscrub").value = v; drawCells();
-      if (v >= 1000) { clearInterval(playing); playing = null; $("play").textContent = "Play"; }
-    }, 40);
-  });
-  $("tscrub").addEventListener("input", drawCells);
-  seg("chem1", function (v) { st.chem1 = v; runOven(); }); seg("solver", function (v) { st.solver = v; runOven(); });
-  seg("chem2", function (v) { st.chem2 = v; $("tscrub").value = 0; runRow(); });
-  $("toven").addEventListener("input", runOven); $("hconv").addEventListener("input", runOven);
-  $("gcond").addEventListener("input", function () { clearTimeout(runRow.t); $("gcond-o").textContent = "…"; runRow.t = setTimeout(runRow, 60); });
-  var rz; window.addEventListener("resize", function () { clearTimeout(rz); rz = setTimeout(function () { if (!$("p-run").hidden) draw(); if (trReady && !$("p-tr").hidden) { runOven(); runRow(); } }, 150); });
+  var rz; window.addEventListener("resize", function () { clearTimeout(rz); rz = setTimeout(function () { if (!$("p-run").hidden) draw(); }, 150); });
   draw();
 })();
 </script>

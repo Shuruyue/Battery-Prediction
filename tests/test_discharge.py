@@ -2,9 +2,9 @@
 import numpy as np
 import pytest
 
-from ups_battery_prediction import ageing
-from ups_battery_prediction import discharge as dc
-from ups_battery_prediction import params as p
+from battery_prediction import ageing
+from battery_prediction import discharge as dc
+from battery_prediction import params as p
 
 
 def test_charge_passed_equals_lithium_moved():

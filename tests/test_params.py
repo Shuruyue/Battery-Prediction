@@ -1,7 +1,7 @@
 """Every parameter function and constant against PyBaMM's ORegan2022 set (skipped without PyBaMM)."""
 import pytest
 
-from ups_battery_prediction import params as p
+from battery_prediction import params as p
 
 
 @pytest.fixture(scope="module")

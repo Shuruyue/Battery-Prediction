@@ -93,13 +93,13 @@ def heat_checks(rd):
     err = lambda r: abs(r["own_min"] / r["dfn_min"] - 1) * 100  # noqa: E731
     used = [r for r in th if r["h"] == 10.0]
     worst = max(err(r) for r in used)
-    rows.append(_row("Self-heating", "simulation against reference at h = 10 (the reference's cooling), 0 and 25 C (%)",
-                     worst, 0, 1.0, worst < 1.0, "rated load, new cell"))
+    rows.append(_row("Self-heating", "SPMe against reference at h = 10 (the reference's cooling), 0 and 25 C (%)",
+                     worst, 0, 1.0, worst < 1.0, "rated load, new cell, the reference's parameters"))
     mild = max(err(r) for r in th if r["h"] is not None and r["h"] <= 25.0)
-    rows.append(_info("Self-heating", "simulation against reference for h = 2-25, 0 and 25 C (%)", mild,
+    rows.append(_info("Self-heating", "SPMe against reference for h = 2-25, 0 and 25 C (%)", mild,
                       "observation; the planned 1 % check over every h failed, see the next row"))
     cold = [r for r in th if r["T_C"] == 0.0 and (r["h"] is None or r["h"] > 25.0)]
-    rows.append(_info("Self-heating", "simulation against reference at 0 C when the cell stays cold "
+    rows.append(_info("Self-heating", "SPMe against reference at 0 C when the cell stays cold "
                       "(h = 100, isothermal) (%)", f"{min(map(err, cold)):.1f}-{max(map(err, cold)):.1f}",
                       "observation: the electrolyte limitation that the SPMe simplifies grows in a cold cell"))
     cold = {r["h"]: r for r in th if r["T_C"] == 0.0}
@@ -107,43 +107,6 @@ def heat_checks(rd):
     rows.append(_row("Self-heating", "reference at 0 C: self-heating lengthens runtime (%)", gain, "> 20", "",
                      gain > 20,
                      "lumped thermal (h = 10) against isothermal; the claim of the README"))
-    return rows
-
-
-def runaway_checks(rd):
-    rows = []
-    v = rs.load_json(os.path.join(rd, "verify_runaway.json"))
-    err = max(abs(a["dT_sim"] / a["dT_from_composition"] - 1) for a in v["adiabatic"].values())
-    rows.append(_row("Thermal runaway", "adiabatic cell: temperature rise against released heat (relative)", err, 0,
-                     1e-6,
-                     err < 1e-6, "energy balance, three chemistries"))
-    over = max(a["dT_sim"] - a["dT_complete"] for a in v["adiabatic"].values())
-    rows.append(_row("Thermal runaway", "adiabatic rise above complete reaction (K)", over, "<= 0", 1e-6, over <= 1e-6,
-                     "bounded by the total heat"))
-    o = v["oven155_solver"]
-    d = abs(o["1e-05"]["t_runaway"] / o["radau"]["t_runaway"] - 1) * 100
-    rows.append(_row("Thermal runaway", "oven 155 C: runaway time, own implicit solver against SciPy Radau (%)", d,
-                     0, 0.2,
-                     d < 0.2, "rtol 1e-5 against Radau at rtol 1e-10"))
-    d = abs(o["1e-05"]["T_peak"] - o["radau"]["T_peak"])
-    rows.append(_row("Thermal runaway", "oven 155 C: peak temperature against Radau (K)", d, 0, 0.5, d < 0.5, "same"))
-    e = v["explicit_euler"]
-    rows.append(_row("Thermal runaway", "explicit Euler, 1 s step, leaves the physical range",
-                     e["1"]["first_bad_time"], "a time", "",
-                     not e["1"]["stays_physical"], "fixed step through the runaway"))
-    s = v["semenov"]
-    d = abs(s["Ta_crit_ode"] - s["Ta_crit_tangency"])
-    rows.append(_row("Thermal runaway", "Semenov critical ambient: ODE against tangency condition (K)", d, 0, 0.05,
-                     d < 0.05,
-                     "one zeroth-order reaction, closed-form condition"))
-    c = v["oven"]["LCO_critical_C"]
-    rows.append(_row("Thermal runaway", "LCO 18650 oven onset (C)", c, "145-150", "", 145.0 < c < 150.0,
-                     "oven tests of Hatchard et al. 2001; Lopez et al. 2015 (Fig. 2a): onset between 145 and 150 C"))
-    lopez = v["oven"].get("LCO_Lopez2015_contents_critical_C")
-    if lopez is not None:
-        rows.append(_info("Thermal runaway", "LCO oven onset with the carbon and electrolyte contents of Lopez et al. "
-                          "2015 (C)", lopez, "observation: the match above depends on two contents that could not be "
-                          "checked against Kim et al. 2007"))
     return rows
 
 
@@ -156,7 +119,7 @@ def experiment_checks(rd):
     rows.append(_row("Experiment", "conformal 90 % intervals inside the range, mean over seeds (range over models)",
                      f"{lo:.3f}-{hi:.3f}", 0.90, "0.85-0.97", lo >= 0.85 and hi <= 0.97,
                      f"{ex.N_CAL} calibration points per seed; finite-sample coverage scatters around 46/51"))
-    data = ex.load_data(os.path.join(rd, "reference.json"), os.path.join(rd, "model_points.json"), "SPMe_lumped")
+    data = ex.load_data(os.path.join(rd, "reference.json"), os.path.join(rd, "model_points.json"))
     pk = ex.formula(data)
     sl = data.sweep("sweep_load")
     at = {round(float(x[1]), 6): (x, t) for x, t in zip(data.X[sl], data.y[sl], strict=True)}
@@ -185,7 +148,7 @@ def readme_checks(rd, readme):
 
 def run_all(results_dir, readme=None):
     rows = (reference_checks(results_dir) + pybamm_checks(results_dir) + convergence_checks(results_dir)
-            + heat_checks(results_dir) + runaway_checks(results_dir) + experiment_checks(results_dir))
+            + heat_checks(results_dir) + experiment_checks(results_dir))
     if readme:
         rows += readme_checks(results_dir, readme)
     return rows

@@ -31,7 +31,7 @@ between the points of a batch.
 
 Time stepping is backward Euler for particles and electrolyte with coefficients from the previous step; the
 temperature follows explicitly from the heat of the step. The load is a constant current or a constant
-power (the load of a UPS inverter); for constant power the current is found by Newton iteration on I V(I) = P.
+power (the load of an inverter); for constant power the current is found by Newton iteration on I V(I) = P.
 """
 from dataclasses import dataclass
 

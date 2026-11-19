@@ -14,10 +14,10 @@ from multiprocessing import Pool
 
 import _path  # noqa: F401
 
-from ups_battery_prediction import design as ds
-from ups_battery_prediction import params as p
-from ups_battery_prediction import reference as ref
-from ups_battery_prediction import results as rs
+from battery_prediction import design as ds
+from battery_prediction import params as p
+from battery_prediction import reference as ref
+from battery_prediction import results as rs
 
 _SIM = None
 

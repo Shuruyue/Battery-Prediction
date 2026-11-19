@@ -15,9 +15,9 @@ import _path  # noqa: F401
 import numpy as np
 import pybamm
 
-from ups_battery_prediction import discharge as dc
-from ups_battery_prediction import params as p
-from ups_battery_prediction import results as rs
+from battery_prediction import discharge as dc
+from battery_prediction import params as p
+from battery_prediction import results as rs
 
 pybamm.set_logging_level("ERROR")
 CODE_CASES = [(25.0, 2.5), (25.0, 5.0), (25.0, 10.0), (0.0, 2.5), (0.0, 5.0), (-10.0, 2.5)]   # (T [C], current [A])

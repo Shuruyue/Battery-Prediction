@@ -2,8 +2,8 @@
 import numpy as np
 from scipy.optimize import brentq
 
-from ups_battery_prediction import params as p
-from ups_battery_prediction.numerics import Electrolyte, Particle, thomas
+from battery_prediction import params as p
+from battery_prediction.numerics import Electrolyte, Particle, thomas
 
 
 def test_thomas_matches_dense_solver():

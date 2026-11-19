@@ -2,8 +2,8 @@
 import numpy as np
 import pytest
 
-from ups_battery_prediction import predictors as pr
-from ups_battery_prediction.design import NORMAL
+from battery_prediction import predictors as pr
+from battery_prediction.design import NORMAL
 
 
 def test_peukert_passes_through_both_rated_points():

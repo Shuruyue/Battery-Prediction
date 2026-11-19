@@ -1,4 +1,4 @@
-"""Predictors of UPS runtime from (ambient temperature [C], load [fraction of 18 W], state of health).
+"""Predictors of battery runtime from (ambient temperature [C], load [fraction of 18 W], state of health).
 
 Three kinds of tool, scored against the same reference:
   1. a formula      - Peukert's law, calibrated on two rated points (25 C, new cell), as from a datasheet
@@ -7,13 +7,13 @@ Three kinds of tool, scored against the same reference:
 plus two ways of putting physics into the learning step (physics features, simulation + data correction).
 """
 import numpy as np
-from sklearn.ensemble import HistGradientBoostingRegressor, RandomForestRegressor
+from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel, WhiteKernel
 from sklearn.linear_model import LinearRegression, RidgeCV
 from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+from sklearn.preprocessing import StandardScaler
 
 from .design import NORMAL
 
@@ -43,12 +43,8 @@ class Peukert:
 
 
 def make_models(seed=0):
-    """The machine-learning regressors, untrained."""
+    """The machine-learning regressors, untrained: a tree ensemble, a neural network and a kernel method."""
     return {
-        "Linear regression": make_pipeline(StandardScaler(), LinearRegression()),
-        "Polynomial (degree 3)": make_pipeline(StandardScaler(), PolynomialFeatures(3),
-                                               RidgeCV(alphas=np.logspace(-6, 2, 30))),
-        "Random forest": RandomForestRegressor(n_estimators=200, min_samples_leaf=1, random_state=seed),
         "Gradient boosting": HistGradientBoostingRegressor(max_iter=400, learning_rate=0.05, min_samples_leaf=5,
                                                            random_state=seed),
         "Neural network": make_pipeline(StandardScaler(), MLPRegressor(

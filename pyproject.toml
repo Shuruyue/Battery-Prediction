@@ -3,9 +3,9 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ups-battery-prediction"
+name = "battery-prediction"
 version = "0.1.0"
-description = "How long a UPS battery lasts and whether it can burn: formula, simulation and machine learning scored against one reference, inside and outside their range"
+description = "How long a battery lasts at constant power: formula, simulation and machine learning scored against one reference, inside and outside their range"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -17,7 +17,7 @@ dev = ["pytest>=7"]
 reference = ["pybamm>=25.1"]
 
 [tool.setuptools]
-packages = ["ups_battery_prediction"]
+packages = ["battery_prediction"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

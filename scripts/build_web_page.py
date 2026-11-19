@@ -1,4 +1,4 @@
-"""Build web/ups-battery.html from web/src/: inline the chart code, the thermal-runaway model and the data block.
+"""Build web/battery.html from web/src/: inline the chart code and the data block.
 
 The data block holds, on the regular grid of results/model_grid.json, the runtime of the simulation and of every
 learned model (trained on seed 0 of the experiment, the same split and noise as in results/ml_results.json),
@@ -15,15 +15,15 @@ import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 from sklearn.exceptions import ConvergenceWarning
 
-from ups_battery_prediction import design as ds
-from ups_battery_prediction import experiment as ex
-from ups_battery_prediction import predictors as pr
-from ups_battery_prediction import results as rs
+from battery_prediction import design as ds
+from battery_prediction import experiment as ex
+from battery_prediction import predictors as pr
+from battery_prediction import results as rs
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 ROOT = Path(_path.ROOT)
 SRC = ROOT / "web" / "src"
-PAGE = ROOT / "web" / "ups-battery.html"
+PAGE = ROOT / "web" / "battery.html"
 LEARNED = {"Gradient boosting": "Gradient boosting", "Neural network": "Neural network",
            "Gaussian process": "Gaussian process", "Physics features": ex.PHYSICS, "Simulation + data": ex.HYBRID}
 
@@ -33,7 +33,7 @@ def grid_data():
     T, L, H = (np.array(g[k]) for k in ("T_C", "load", "soh"))
     G = np.array(g["runtime_min"])
     interp = RegularGridInterpolator((T, L, H[::-1]), G[:, :, ::-1], bounds_error=False, fill_value=None)
-    data = ex.load_data(_path.result("reference.json"), _path.result("model_points.json"), "SPMe_lumped")
+    data = ex.load_data(_path.result("reference.json"), _path.result("model_points.json"))
     sim_fun = ex.sim_lookup(data, fallback=interp)
     TT, LL, HH = np.meshgrid(T, L, H, indexing="ij")
     XG = np.column_stack([TT.ravel(), LL.ravel(), HH.ravel()])
@@ -66,9 +66,8 @@ def grid_data():
 
 
 def build(data):
-    page = (SRC / "ups-battery.src.html").read_text(encoding="utf-8")
+    page = (SRC / "battery.src.html").read_text(encoding="utf-8")
     parts = {"/*__CHART__*/": (SRC / "chart.js").read_text(encoding="utf-8"),
-             "/*__MODEL__*/": (SRC / "runaway_model.js").read_text(encoding="utf-8"),
              "/*__DATA__*/": "window.RUNTIME_DATA = " + json.dumps(data, separators=(",", ":")) + ";"}
     for token, text in parts.items():
         assert page.count(token) == 1, token
