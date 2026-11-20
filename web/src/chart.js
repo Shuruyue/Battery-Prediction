@@ -96,7 +96,7 @@
         var f = s.x[hi] > s.x[lo] ? (xv - s.x[lo]) / (s.x[hi] - s.x[lo]) : 0, v = s.y[lo] + f * (s.y[hi] - s.y[lo]);
         if (!isFinite(v)) return;
         rows += '<div class="r"><svg width="16" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="' + s.color +
-          '" stroke-width="2.4"' + (s.dash ? ' stroke-dasharray="4 3"' : "") + '/></svg><i>' + s.name + "</i><b>" +
+          '" stroke-width="2.4"' + (s.dash ? ' stroke-dasharray="' + s.dash + '"' : "") + '/></svg><i>' + s.name + "</i><b>" +
           (opt.fmtTip ? opt.fmtTip(v) : fmt(v)) + "</b></div>";
       });
       if (!rows) return leave();

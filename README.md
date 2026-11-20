@@ -8,7 +8,7 @@
 
 [![Error of each predictor against the distance of the test point from the training range](docs/figures/error_vs_distance.png)](https://shuruyue.github.io/Battery-Prediction/web/battery.html)
 
-*Mean absolute error of the predicted runtime against the distance of the test point from the training range, pooled over 20 random splits. The learned models (red) are accurate inside the range and diverge outside it; the formula, the simulation and the two models with physics in them degrade slowly. The simulation runs with parameters 30 % off those of the reference.*
+*Mean absolute error of the predicted runtime against the distance of the test point from the training range, pooled over 20 random splits. The learned models (red), with mean errors of 0.5–1.8 % inside the range, diverge outside it; the formula, the simulation and the two models with physics in them degrade slowly. The simulation runs with parameters 30 % off those of the reference.*
 
 ## Battery Runtime Inside and Outside the Training Range
 
@@ -187,7 +187,7 @@ For a new point exchangeable with the calibration points the coverage is $k/(n+1
 | Heat-transfer coefficient $h$ | 10 W m⁻² K⁻¹ | PyBaMM's value for this set; assumed for a cell in a battery cabinet |
 | Cooling area, cell volume | 53.1 cm², 24.2 cm³ | [1] |
 | SEI molar volume, resistivity, initial thickness | 9.585 × 10⁻⁵ m³ mol⁻¹, 2 × 10⁵ Ω m, 5 nm | PyBaMM's `Chen2020` set, after [7] |
-| Parameters of the simulation tool | solid diffusivities and exchange currents × 0.7, resistances × 1.3 of the above | assumed, pessimistic; the checks against PyBaMM use the exact set |
+| Parameters of the simulation tool | solid diffusivities and exchange currents × 0.7, electrolyte and electrode resistances × 1.3 of the above (the SEI film resistance is not scaled) | assumed, pessimistic; the checks against PyBaMM use the exact set |
 | Rated load | 18 W per cell (56 cells in series, about 1 kW) | assumed example pack |
 | Training range of the learned models | 18–28 °C, 30–80 % load, SOH 0.9–1.0 | design of this study |
 | Wider box | 0–45 °C, 20–150 % load, SOH 0.7–1.0 | design of this study |
@@ -219,7 +219,7 @@ Mean absolute percentage error of the predicted runtime (20 random splits):
 
 ![Reference and predictions along the temperature and state-of-health sweeps](docs/figures/sweeps.png)
 
-*Reference (dots) and the predictions of one split along (a) the temperature sweep at rated load and (b) the state-of-health sweep at 60 % load and 25 °C. Shaded: the training range.*
+*Reference (dots) and the predictions of one split along (a) the temperature sweep at rated load and (b) the state-of-health sweep at 60 % load and 25 °C. Shaded: the training range of the swept quantity. The load of (a), 100 % of rated power, lies outside the training range (30–80 %), so every point of (a) is an extrapolation for the learned models.*
 
 **Physics carries a model outside the range, even with wrong parameters.** With the reference's exact parameters the simulation's outside error would be 0.04 %, a best case, since the two models then share every parameter; with one parameter group wrong (solid diffusivities, exchange currents or resistances by 30 %, or the cooling coefficient by a factor of two) it is 0.1–2.8 % (`scripts/perturb_model.py`). Trained on top of any of these simulations, the data correction keeps the outside error at or below 1.1 %, and its 90 % intervals cover 84–89 % of the outside points.
 

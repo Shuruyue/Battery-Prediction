@@ -51,7 +51,7 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 .head h1 { font-size: 1.55rem; font-weight: 600; letter-spacing: -0.01em; }
 .head h1 .en { display: block; font-size: .8rem; font-weight: 500; color: var(--muted); letter-spacing: .03em; margin-bottom: 2px; }
 .head .sys { color: var(--ink-2); font-size: .86rem; max-width: 66ch; margin: 0; }
-.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin-bottom: 14px; overflow-x: auto; }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin-bottom: 14px; overflow-x: auto; overflow-y: hidden; }
 .tab { font: inherit; font-size: .9rem; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--ink-2); padding: 8px 12px 9px; cursor: pointer; white-space: nowrap; margin-bottom: -1px; }
 .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 500; }
 .layout { display: grid; grid-template-columns: 296px minmax(0, 1fr); gap: 18px; align-items: start; }
@@ -180,7 +180,7 @@ footer { font-size: .78rem; color: var(--muted); margin-top: 18px; max-width: 10
               <button type="button" data-v="T" aria-pressed="true">Temperature</button><button type="button" data-v="L" aria-pressed="false">Load</button><button type="button" data-v="H" aria-pressed="false">Health</button></div>
             <div class="chart" id="p-sweep"></div>
             <div class="legend" id="lg-sweep"></div>
-            <div class="note">Shaded band: the training range. Dots: the reference, where it was run.</div></div>
+            <div class="note">Shaded band: the training range of the swept condition (a point is inside only if the other two conditions are inside too). Dots: the reference, where it was run.</div></div>
         </div>
         <div class="answer" id="answer"></div>
       </div>
@@ -192,7 +192,7 @@ footer { font-size: .78rem; color: var(--muted); margin-top: 18px; max-width: 10
       <h2>What each tool is</h2>
       <ul>
         <li><b>Reference</b>: the Doyle–Fuller–Newman model with a lumped thermal model, solved with PyBaMM using the LG M50 parameters of O’Regan et al. (2022), cooled by 10 W/(m² K). It plays the real battery.</li>
-        <li><b>Simulation</b>: a single-particle model with electrolyte (SPMe) and the same lumped thermal model, written from scratch in NumPy. The parameters of a real cell are never known exactly, so it runs with a pessimistic set (solid diffusivities and exchange currents 30 % low, resistances 30 % high), and it is not fitted to any data.</li>
+        <li><b>Simulation</b>: a single-particle model with electrolyte (SPMe) and the same lumped thermal model, written from scratch in NumPy. The parameters of a real cell are never known exactly, so it runs with a pessimistic set (solid diffusivities and exchange currents 30 % low, electrolyte and electrode resistances 30 % high), and it is not fitted to any data.</li>
         <li><b>Formula</b>: Peukert’s law through two rated points (25 °C, new cell, 50 % and 100 % load).</li>
         <li><b>Learned models</b>: gradient boosting, a neural network and a Gaussian process (scikit-learn), trained on 150 noisy discharges inside the training range; <b>physics features</b> is a linear fit of log t on log load, log health and 1/T; <b>simulation + data</b> learns a correction to the simulation.</li>
       </ul>
@@ -295,9 +295,9 @@ footer { font-size: .78rem; color: var(--muted); margin-top: 18px; max-width: 10
     var series = [], top = 0, lg = "";
     TOOLS.forEach(function (t) {
       var ys = xs.map(function (x) { var a = fx(x); return predict(t, a[0], a[1], a[2]); });
-      series.push({ name: t.name, color: css(t.color), x: xs, y: ys, dash: t.dash || (t.key ? "" : "") });
+      series.push({ name: t.name, color: css(t.color), x: xs, y: ys, dash: t.dash || "" });
       top = Math.max(top, predict(t, s.T, s.L, s.H));
-      lg += '<span><svg width="16" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="' + css(t.color) + '" stroke-width="2.4"' + (t.dash ? ' stroke-dasharray="4 3"' : "") + "/></svg>" + t.name + "</span>";
+      lg += '<span><svg width="16" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="' + css(t.color) + '" stroke-width="2.4"' + (t.dash ? ' stroke-dasharray="' + t.dash + '"' : "") + "/></svg>" + t.name + "</span>";
     });
     $("lg-sweep").innerHTML = lg + '<span><svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="var(--ref)"/></svg>reference</span>';
     var rx = [], ry = [];

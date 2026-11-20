@@ -9,8 +9,9 @@ NORMAL = dict(T=(18.0, 28.0), load=(0.3, 0.8), soh=(0.9, 1.0))
 WIDE = dict(T=(0.0, 45.0), load=(0.2, 1.5), soh=(0.7, 1.0))
 # Parameters of the simulation tool (factors of discharge.Scale). The reference plays the real cell, and the
 # parameters of a real cell are never known exactly, so the simulation does not get the reference's: solid
-# diffusivities and exchange currents 30 % low and resistances 30 % high, a pessimistic set, as a designer on the
-# safe side would choose. scripts/perturb_model.py scores the simulation with every other choice.
+# diffusivities and exchange currents 30 % low and electrolyte and electrode resistances 30 % high (the SEI film
+# resistance of an aged cell is not scaled), a pessimistic set, as a designer on the safe side would choose.
+# scripts/perturb_model.py scores the simulation with every other choice.
 SIM_SCALE = dict(diffusivity=0.7, exchange=0.7, ohmic=1.3)
 
 

@@ -77,7 +77,8 @@ def _steady_exact(x, i):
     zz = np.linspace(0, p.L_X, 400001)
     eps = np.where(zz <= p.L_N, p.EPS_E_N, np.where(zz <= x1, p.EPS_E_S, p.EPS_E_P))
     total_eps = p.EPS_E_N * p.L_N + p.EPS_E_S * p.L_S + p.EPS_E_P * p.L_P
-    c0 = p.C_E0 - np.trapezoid(eps * shape(zz), zz) / total_eps
+    f = eps * shape(zz)                                             # trapezoid rule (NumPy 1.x has no np.trapezoid)
+    c0 = p.C_E0 - np.sum(0.5 * (f[1:] + f[:-1]) * np.diff(zz)) / total_eps
     return c0 + shape(x)
 
 
